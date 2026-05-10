@@ -10,8 +10,8 @@ class CameraIntrinsics:
     f: float = 50.0             # focal length (mm)
     x0: float = 0.0             # principal point x (mm), default = image center
     y0: float = 0.0             # principal point y (mm), default = image center
-    sensor_width: float = 36.0  # sensor width (mm)
-    sensor_height: float = 24.0 # sensor height (mm)
+    sensor_width: float = 35.9  # sensor width (mm)
+    sensor_height: float = 23.9 # sensor height (mm)
     img_width: int = 8256       # image width (pixels)
     img_height: int = 5504      # image height (pixels)
 
@@ -121,9 +121,9 @@ def rotation_matrix(omega: float, phi: float, kappa: float) -> np.ndarray:
     ck, sk = np.cos(kappa), np.sin(kappa)
 
     R = np.array([
-        [cp * ck,              sw * sp * ck - cw * sk,  cw * sp * ck + sw * sk],
-        [cp * sk,              sw * sp * sk + cw * ck,  cw * sp * sk - sw * ck],
-        [-sp,                  sw * cp,                  cw * cp              ],
+        [cp * ck,  sw * sp * ck - cw * sk,  cw * sp * ck + sw * sk],
+        [cp * sk,  sw * sp * sk + cw * ck,  cw * sp * sk - sw * ck],
+        [-sp,      sw * cp,                 cw * cp               ],
     ])
     return R
 
@@ -140,23 +140,23 @@ def rotation_matrix_derivatives(omega: float, phi: float, kappa: float):
 
     # dR/domega: differentiate R w.r.t. omega (only sw, cw terms change)
     dR_do = np.array([
-        [0,                    cw * sp * ck + sw * sk,  -sw * sp * ck + cw * sk],
-        [0,                    cw * sp * sk - sw * ck,  -sw * sp * sk - cw * ck],
-        [0,                    cw * cp,                 -sw * cp              ],
+        [0, cw * sp * ck + sw * sk,  -sw * sp * ck + cw * sk],
+        [0, cw * sp * sk - sw * ck,  -sw * sp * sk - cw * ck],
+        [0, cw * cp,                 -sw * cp               ],
     ])
 
     # dR/dphi: differentiate R w.r.t. phi (only cp, sp terms change)
     dR_dp = np.array([
-        [-sp * ck,             sw * cp * ck,             cw * cp * ck          ],
-        [-sp * sk,             sw * cp * sk,             cw * cp * sk          ],
-        [-cp,                  -sw * sp,                 -cw * sp              ],
+        [-sp * ck, sw * cp * ck, cw * cp * ck],
+        [-sp * sk, sw * cp * sk, cw * cp * sk],
+        [-cp,      -sw * sp,     -cw * sp    ],
     ])
 
     # dR/dkappa: differentiate R w.r.t. kappa (only ck, sk terms change)
     dR_dk = np.array([
-        [-cp * sk,             -sw * sp * sk - cw * ck,  -cw * sp * sk + sw * ck],
-        [cp * ck,              sw * sp * ck - cw * sk,    cw * sp * ck + sw * sk],
-        [0,                    0,                         0                     ],
+        [-cp * sk, -sw * sp * sk - cw * ck, -cw * sp * sk + sw * ck],
+        [cp * ck,  sw * sp * ck - cw * sk,  cw * sp * ck + sw * sk ],
+        [0,        0,                       0                      ],
     ])
 
     return dR_do, dR_dp, dR_dk
@@ -264,9 +264,11 @@ def pixel_to_image_coords(
         (x_img, y_img) in mm
     """
     ps = intrinsics.pixel_size
-    # Default principal point is image center
-    cx = intrinsics.img_width / 2.0 if intrinsics.x0 == 0.0 else intrinsics.x0 / ps + intrinsics.img_width / 2.0
-    cy = intrinsics.img_height / 2.0 if intrinsics.y0 == 0.0 else -intrinsics.y0 / ps + intrinsics.img_height / 2.0
+    # Principal point: image center + x0/y0 offset (in mm, converted to pixels)
+    # x0/y0 are offsets from image center in mm; positive x0 moves principal point right,
+    # positive y0 moves principal point up (opposite to pixel y direction)
+    cx = intrinsics.img_width / 2.0 + intrinsics.x0 / ps
+    cy = intrinsics.img_height / 2.0 - intrinsics.y0 / ps
 
     x_img = (pixel_x - cx) * ps
     y_img = -(pixel_y - cy) * ps

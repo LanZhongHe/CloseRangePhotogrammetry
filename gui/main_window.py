@@ -20,8 +20,8 @@ from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QListWidget, QGraphicsView, QGraphicsScene,
     QGraphicsPixmapItem, QGraphicsTextItem,
-    QGroupBox, QFormLayout, QDoubleSpinBox,
-    QSpinBox, QPushButton, QLabel, QFileDialog, QStatusBar,
+    QGroupBox, QFormLayout,
+    QPushButton, QLabel, QFileDialog, QStatusBar,
     QAction, QProgressBar, QMessageBox, QSplitter,
     QDialog, QLineEdit, QDialogButtonBox, QInputDialog,
 )
@@ -33,13 +33,14 @@ from src.detection import detect_candidates, DetectionParams
 from src.subpixel import localize_target, centroid_refine
 from src.id_recognition import assign_sequential_ids
 from src.data_model import DetectionResult, TargetPoint
-from src.io_utils import save_results
+from src.io_utils import save_results, load_results
 from src.coord_io import load_control_field
-from src.matching import MatchedPoint
+from src.matching import MatchedPoint, save_matched_points, load_matched_points
 from src.camera_model import CameraIntrinsics, SolveConfig
 from gui.matching_dialog import MatchingDialog
 from gui.resection_panel import ResectionPanel
 from gui.dlt_panel import DLTPanel
+from gui.detection_params_dialog import DetectionParamsDialog
 
 
 SUPPORTED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp"}
@@ -214,13 +215,13 @@ class IdCorrectionDialog(QDialog):
 
     def __init__(self, current_id: str, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Correct ID")
+        self.setWindowTitle("修正ID")
         layout = QFormLayout(self)
 
         self.id_input = QLineEdit(current_id)
         self.id_input.setMaxLength(3)
         self.id_input.setPlaceholderText("001-999")
-        layout.addRow("New ID:", self.id_input)
+        layout.addRow("新ID:", self.id_input)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         buttons.accepted.connect(self.accept)
@@ -239,7 +240,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Control Point Detection \u2014 Close Range Photogrammetry")
+        self.setWindowTitle("\u63a7\u5236\u70b9\u68c0\u6d4b \u2014 \u8fd1\u666f\u6444\u5f71\u6d4b\u91cf")
         self.resize(1600, 900)
 
         self._image_paths: List[str] = []
@@ -249,8 +250,13 @@ class MainWindow(QMainWindow):
         self._worker: Optional[DetectionWorker] = None
         self._adding_mode: bool = False  # True = waiting for user click to add
         self._control_field: dict[str, tuple[float, float, float]] = {}
-        self._matched_points: list[MatchedPoint] = []
+        self._matched_points: dict[str, list[MatchedPoint]] = {}  # image_path -> points
+        self._matches_state: dict[str, dict[int, str]] = {}  # image_path -> {row: control_id}
         self._current_image: np.ndarray | None = None  # cached for matching preview
+        self._det_target_size = 100
+        self._det_circularity = 0.65
+        self._det_area_tol = 0.5
+        self._resection_panel: ResectionPanel | None = None  # stored for intrinsics access
 
         self._init_ui()
         self._init_menu()
@@ -267,7 +273,7 @@ class MainWindow(QMainWindow):
         left_layout = QVBoxLayout(left_widget)
         left_layout.setContentsMargins(4, 4, 4, 4)
 
-        btn_open = QPushButton("Open Folder...")
+        btn_open = QPushButton("打开文件夹...")
         btn_open.clicked.connect(self._open_folder)
         left_layout.addWidget(btn_open)
 
@@ -275,15 +281,15 @@ class MainWindow(QMainWindow):
         self.file_list.currentRowChanged.connect(self._on_file_selected)
         left_layout.addWidget(self.file_list)
 
-        btn_detect_all = QPushButton("Detect All")
+        btn_detect_all = QPushButton("全部检测")
         btn_detect_all.clicked.connect(self._detect_all)
         left_layout.addWidget(btn_detect_all)
 
-        btn_detect_current = QPushButton("Detect Current")
+        btn_detect_current = QPushButton("检测当前")
         btn_detect_current.clicked.connect(self._detect_current)
         left_layout.addWidget(btn_detect_current)
 
-        btn_export = QPushButton("Export JSON...")
+        btn_export = QPushButton("导出JSON...")
         btn_export.clicked.connect(self._export_json)
         left_layout.addWidget(btn_export)
 
@@ -294,64 +300,36 @@ class MainWindow(QMainWindow):
         self.viewer.left_clicked.connect(self._on_left_click)
         splitter.addWidget(self.viewer)
 
-        # Right: parameter + info panels
+        # Right: info panel
         right_widget = QWidget()
         right_layout = QVBoxLayout(right_widget)
         right_layout.setContentsMargins(4, 4, 4, 4)
 
-        # Parameter group
-        param_group = QGroupBox("Detection Parameters")
-        param_form = QFormLayout(param_group)
-
-        self.spin_target_size = QSpinBox()
-        self.spin_target_size.setRange(50, 1000)
-        self.spin_target_size.setValue(100)
-        self.spin_target_size.setSuffix(" px")
-        param_form.addRow("Target Size:", self.spin_target_size)
-
-        self.spin_circ = QDoubleSpinBox()
-        self.spin_circ.setRange(0.1, 1.0)
-        self.spin_circ.setSingleStep(0.05)
-        self.spin_circ.setValue(0.65)
-        param_form.addRow("Circularity Min:", self.spin_circ)
-
-        self.spin_area_tol = QDoubleSpinBox()
-        self.spin_area_tol.setRange(0.1, 1.0)
-        self.spin_area_tol.setSingleStep(0.05)
-        self.spin_area_tol.setValue(0.5)
-        param_form.addRow("Area Tolerance:", self.spin_area_tol)
-
-        btn_reapply = QPushButton("Re-apply Parameters")
-        btn_reapply.clicked.connect(self._detect_current)
-        param_form.addRow(btn_reapply)
-
-        right_layout.addWidget(param_group)
-
         # Selected point info
-        info_group = QGroupBox("Selected Point")
+        info_group = QGroupBox("\u9009\u4e2d\u70b9")
         info_form = QFormLayout(info_group)
 
         self.lbl_id = QLabel("\u2014")
         info_form.addRow("ID:", self.lbl_id)
 
         self.lbl_coord = QLabel("\u2014")
-        info_form.addRow("Pixel Coord:", self.lbl_coord)
+        info_form.addRow("\u50cf\u7d20\u5750\u6807:", self.lbl_coord)
 
         self.lbl_conf = QLabel("\u2014")
-        info_form.addRow("Confidence:", self.lbl_conf)
+        info_form.addRow("\u7f6e\u4fe1\u5ea6:", self.lbl_conf)
 
         self.lbl_method = QLabel("\u2014")
-        info_form.addRow("Method:", self.lbl_method)
+        info_form.addRow("\u65b9\u6cd5:", self.lbl_method)
 
-        btn_correct = QPushButton("Correct ID...")
+        btn_correct = QPushButton("\u4fee\u6b63ID...")
         btn_correct.clicked.connect(self._correct_id)
         info_form.addRow(btn_correct)
 
-        btn_delete = QPushButton("Delete Point")
+        btn_delete = QPushButton("\u5220\u9664\u70b9")
         btn_delete.clicked.connect(self._delete_point)
         info_form.addRow(btn_delete)
 
-        btn_add = QPushButton("Add Point (click on image)")
+        btn_add = QPushButton("\u6dfb\u52a0\u70b9\uff08\u70b9\u51fb\u5f71\u50cf\uff09")
         btn_add.clicked.connect(self._start_add_mode)
         info_form.addRow(btn_add)
 
@@ -381,21 +359,28 @@ class MainWindow(QMainWindow):
     def _init_menu(self):
         menubar = self.menuBar()
 
-        file_menu = menubar.addMenu("File")
-        act_open = QAction("Open Folder...", self)
+        file_menu = menubar.addMenu("文件")
+        act_open = QAction("打开文件夹...", self)
         act_open.triggered.connect(self._open_folder)
         file_menu.addAction(act_open)
-        act_export = QAction("Export JSON...", self)
+        act_load_json = QAction("载入检测结果 JSON...", self)
+        act_load_json.triggered.connect(self._load_detection_json)
+        file_menu.addAction(act_load_json)
+        act_export = QAction("导出JSON...", self)
         act_export.triggered.connect(self._export_json)
         file_menu.addAction(act_export)
 
-        det_menu = menubar.addMenu("Detection")
-        act_detect_all = QAction("Detect All Images", self)
+        det_menu = menubar.addMenu("检测")
+        act_detect_all = QAction("全部检测", self)
         act_detect_all.triggered.connect(self._detect_all)
         det_menu.addAction(act_detect_all)
-        act_detect_cur = QAction("Detect Current Image", self)
+        act_detect_cur = QAction("检测当前", self)
         act_detect_cur.triggered.connect(self._detect_current)
         det_menu.addAction(act_detect_cur)
+        det_menu.addSeparator()
+        act_det_params = QAction("检测参数...", self)
+        act_det_params.triggered.connect(self._open_detection_params)
+        det_menu.addAction(act_det_params)
 
         # Photogrammetry menu
         photo_menu = menubar.addMenu("摄影测量")
@@ -406,6 +391,16 @@ class MainWindow(QMainWindow):
         act_match = QAction("像点匹配...", self)
         act_match.triggered.connect(self._open_matching_dialog)
         photo_menu.addAction(act_match)
+
+        photo_menu.addSeparator()
+        act_save_matches = QAction("保存匹配对...", self)
+        act_save_matches.triggered.connect(self._save_matched_points)
+        photo_menu.addAction(act_save_matches)
+
+        act_load_matches = QAction("载入匹配对...", self)
+        act_load_matches.triggered.connect(self._load_matched_points)
+        photo_menu.addAction(act_load_matches)
+        photo_menu.addSeparator()
 
         act_resection = QAction("空间后方交会...", self)
         act_resection.triggered.connect(self._open_resection_panel)
@@ -419,10 +414,24 @@ class MainWindow(QMainWindow):
 
     def _get_params(self) -> DetectionParams:
         return DetectionParams(
-            target_size_px=self.spin_target_size.value(),
-            area_tolerance=self.spin_area_tol.value(),
-            circularity_min=self.spin_circ.value(),
+            target_size_px=self._det_target_size,
+            area_tolerance=self._det_area_tol,
+            circularity_min=self._det_circularity,
         )
+
+    def _open_detection_params(self):
+        """Open the detection parameters dialog."""
+        dlg = DetectionParamsDialog(
+            target_size=self._det_target_size,
+            circularity_min=self._det_circularity,
+            area_tolerance=self._det_area_tol,
+            parent=self,
+        )
+        if dlg.exec_() == QDialog.Accepted:
+            vals = dlg.get_values()
+            self._det_target_size = vals["target_size"]
+            self._det_circularity = vals["circularity_min"]
+            self._det_area_tol = vals["area_tolerance"]
 
     def _current_path(self) -> Optional[str]:
         row = self.file_list.currentRow()
@@ -496,8 +505,8 @@ class MainWindow(QMainWindow):
             )
 
         self._adding_mode = True
-        self.lbl_mode.setText("[ADD MODE] Click on image to add point")
-        self.status.showMessage("Click on the image to add a new control point")
+        self.lbl_mode.setText("[添加模式] 点击影像添加控制点")
+        self.status.showMessage("点击影像添加新控制点")
 
     def _add_point_at(self, sx: float, sy: float):
         """Add a new target at the clicked scene position."""
@@ -510,7 +519,7 @@ class MainWindow(QMainWindow):
 
         # Get ID
         id_str, ok = QInputDialog.getText(
-            self, "New Point ID", "Enter ID (001-999):", text="001"
+            self, "新点号", "输入点号:", text="001"
         )
         if not ok:
             return
@@ -538,13 +547,13 @@ class MainWindow(QMainWindow):
         )
         result.targets.append(tp)
         self._update_selection(len(result.targets) - 1)
-        self.status.showMessage(f"Added target {id_str} at ({cx_ref:.1f}, {cy_ref:.1f})")
+        self.status.showMessage(f"已添加目标 {id_str} 位于 ({cx_ref:.1f}, {cy_ref:.1f})")
 
     # --- Correct ID ---
 
     def _correct_id(self):
         if self._selected_index < 0:
-            QMessageBox.information(self, "No Selection", "Click on a target first.")
+            QMessageBox.information(self, "未选中", "请先点击选择一个目标点。")
             return
 
         result = self._current_result()
@@ -562,7 +571,7 @@ class MainWindow(QMainWindow):
 
     def _delete_point(self):
         if self._selected_index < 0:
-            QMessageBox.information(self, "No Selection", "Click on a target first.")
+            QMessageBox.information(self, "未选中", "请先点击选择一个目标点。")
             return
 
         result = self._current_result()
@@ -576,7 +585,7 @@ class MainWindow(QMainWindow):
         self.lbl_coord.setText("\u2014")
         self.lbl_conf.setText("\u2014")
         self.lbl_method.setText("\u2014")
-        self.status.showMessage(f"Deleted target {removed.id}")
+        self.status.showMessage(f"已删除目标 {removed.id}")
 
     # --- Display ---
 
@@ -594,7 +603,7 @@ class MainWindow(QMainWindow):
         self.status.showMessage(
             f"[{self._current_index + 1}/{len(self._image_paths)}] "
             f"{os.path.basename(path)}  "
-            f"Targets: {len(result.targets) if result else 0}"
+            f"目标: {len(result.targets) if result else 0}"
         )
 
     def _display_image(self, path: str):
@@ -618,7 +627,7 @@ class MainWindow(QMainWindow):
         """Load control field coordinates from a text file."""
         path, _ = QFileDialog.getOpenFileName(
             self, "选择控制场坐标文件", "docs/",
-            "Text Files (*.txt);;All Files (*)"
+            "文本文件 (*.txt);;所有文件 (*)"
         )
         if not path:
             return
@@ -631,7 +640,11 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "加载失败", str(e))
 
     def _get_intrinsics(self) -> CameraIntrinsics:
-        """Get default camera intrinsics from current image dimensions."""
+        """Get camera intrinsics from resection panel if available, else from image dimensions."""
+        # If resection panel is open, use its camera parameters
+        if self._resection_panel is not None:
+            return self._resection_panel._get_intrinsics()
+        # Otherwise, use default parameters with image dimensions
         result = self._current_result()
         if result:
             return CameraIntrinsics(
@@ -650,27 +663,35 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "无控制场", "请先加载控制场坐标文件。")
             return
 
+        path = self._current_path() or ""
         intrinsics = self._get_intrinsics()
-        solve_config = SolveConfig()  # default config for min_points calculation
+        solve_config = SolveConfig()
+
+        # Restore previous matching state for this image
+        prev = self._matches_state.get(path, {})
 
         dlg = MatchingDialog(
             detected_points=result.targets,
             control_field=self._control_field,
-            image_path=self._current_path() or "",
+            image_path=path,
             image=self._current_image,
             intrinsics=intrinsics,
             solve_config=solve_config,
+            previous_matches=prev,
             parent=self,
         )
         if dlg.exec_() == QDialog.Accepted:
-            self._matched_points = dlg.get_matched_points()
+            self._matched_points[path] = dlg.get_matched_points()
+            self._matches_state[path] = dlg.get_matches_dict()
             self.status.showMessage(
-                f"完成匹配：{len(self._matched_points)} 对像点-物方坐标"
+                f"完成匹配：{len(self._matched_points[path])} 对像点-物方坐标"
             )
 
     def _open_resection_panel(self):
         """Open the space resection panel in a dialog."""
-        if not self._matched_points:
+        path = self._current_path() or ""
+        points = self._matched_points.get(path, [])
+        if not points:
             QMessageBox.information(
                 self, "未匹配", "请先通过「像点匹配」建立像点-物方坐标对应关系。"
             )
@@ -682,13 +703,17 @@ class MainWindow(QMainWindow):
         dlg.setMinimumSize(700, 800)
         layout = QVBoxLayout(dlg)
         panel = ResectionPanel(dlg)
-        panel.set_matched_points(self._matched_points)
+        panel.set_matched_points(points)
         layout.addWidget(panel)
+        self._resection_panel = panel  # store for intrinsics access
         dlg.exec_()
+        self._resection_panel = None  # clear after dialog closes
 
     def _open_dlt_panel(self):
         """Open the DLT panel in a dialog."""
-        if not self._matched_points:
+        path = self._current_path() or ""
+        points = self._matched_points.get(path, [])
+        if not points:
             QMessageBox.information(
                 self, "未匹配", "请先通过「像点匹配」建立像点-物方坐标对应关系。"
             )
@@ -700,14 +725,109 @@ class MainWindow(QMainWindow):
         dlg.setMinimumSize(700, 800)
         layout = QVBoxLayout(dlg)
         panel = DLTPanel(dlg)
-        panel.set_matched_points(self._matched_points)
+        panel.set_matched_points(points)
         layout.addWidget(panel)
         dlg.exec_()
+
+    # --- JSON load/save ---
+
+    def _load_detection_json(self):
+        """Load detection results from a JSON file (skips detection pipeline)."""
+        path, _ = QFileDialog.getOpenFileName(
+            self, "载入检测结果 JSON", "output/",
+            "JSON文件 (*.json);;所有文件 (*)"
+        )
+        if not path:
+            return
+        try:
+            results = load_results(path)
+        except Exception as e:
+            QMessageBox.warning(self, "载入失败", str(e))
+            return
+
+        for result in results:
+            self._results[result.image_path] = result
+            if result.image_path not in self._image_paths:
+                self._image_paths.append(result.image_path)
+                self.file_list.addItem(os.path.basename(result.image_path))
+
+        total = sum(len(r.targets) for r in results)
+        self.status.showMessage(
+            f"已载入 {len(results)} 个检测结果，共 {total} 个目标点"
+        )
+        # Auto-select the first image so the viewer is not blank
+        if self._image_paths and self.file_list.currentRow() < 0:
+            self.file_list.setCurrentRow(0)
+
+    def _save_matched_points(self):
+        """Save current image's matched point pairs to a JSON file."""
+        path = self._current_path() or ""
+        points = self._matched_points.get(path, [])
+        if not points:
+            QMessageBox.information(self, "无数据", "当前影像无匹配点对可保存。")
+            return
+
+        stem = Path(path).stem if path else "matched_points"
+        default_name = f"{stem}_matched.json"
+
+        save_path, _ = QFileDialog.getSaveFileName(
+            self, "保存匹配对", default_name,
+            "JSON文件 (*.json)"
+        )
+        if not save_path:
+            return
+
+        save_matched_points(points, save_path, path)
+        self.status.showMessage(
+            f"已保存 {len(points)} 对匹配点到 {save_path}"
+        )
+
+    def _load_matched_points(self):
+        """Load matched point pairs from a JSON file."""
+        load_path, _ = QFileDialog.getOpenFileName(
+            self, "载入匹配对", "",
+            "JSON文件 (*.json);;所有文件 (*)"
+        )
+        if not load_path:
+            return
+        try:
+            points, image_path = load_matched_points(load_path)
+        except Exception as e:
+            QMessageBox.warning(self, "载入失败", str(e))
+            return
+
+        if not image_path:
+            QMessageBox.warning(self, "载入失败", "JSON 中缺少 image_path 字段。")
+            return
+
+        # Store per-image matched points
+        self._matched_points[image_path] = points
+
+        # Rebuild matches_state by matching detected_id to the detection result's row index
+        if image_path in self._results:
+            targets = self._results[image_path].targets
+            id_to_row = {t.id: i for i, t in enumerate(targets)}
+            state = {}
+            for pt in points:
+                row = id_to_row.get(pt.detected_id)
+                if row is not None:
+                    state[row] = pt.control_id
+            self._matches_state[image_path] = state
+
+        # Auto-switch to the corresponding image if it exists in the file list
+        for i, p in enumerate(self._image_paths):
+            if p == image_path:
+                self.file_list.setCurrentRow(i)
+                break
+
+        self.status.showMessage(
+            f"已载入 {len(points)} 对匹配点（影像: {os.path.basename(image_path)}）"
+        )
 
     # --- File management ---
 
     def _open_folder(self):
-        folder = QFileDialog.getExistingDirectory(self, "Select Image Folder")
+        folder = QFileDialog.getExistingDirectory(self, "选择影像文件夹")
         if not folder:
             return
 
@@ -722,7 +842,7 @@ class MainWindow(QMainWindow):
                 self._image_paths.append(full)
                 self.file_list.addItem(f)
 
-        self.status.showMessage(f"Loaded {len(self._image_paths)} images from {folder}")
+        self.status.showMessage(f"已加载 {len(self._image_paths)} 张影像")
         if self._image_paths:
             self.file_list.setCurrentRow(0)
 
@@ -746,7 +866,7 @@ class MainWindow(QMainWindow):
 
         image = cv2.imread(path)
         if image is None:
-            QMessageBox.warning(self, "Error", f"Cannot read image: {path}")
+            QMessageBox.warning(self, "错误", f"无法读取影像: {path}")
             return
 
         t0 = time.time()
@@ -769,14 +889,14 @@ class MainWindow(QMainWindow):
         self._selected_index = -1
 
         self._display_image(path)
-        self.status.showMessage(f"Detected {len(targets)} targets in {elapsed:.2f}s")
+        self.status.showMessage(f"检测到 {len(targets)} 个目标，耗时 {elapsed:.2f}s")
 
     def _detect_all(self):
         if not self._image_paths:
             return
 
         if self._worker and self._worker.isRunning():
-            QMessageBox.information(self, "Busy", "Detection is already running.")
+            QMessageBox.information(self, "忙碌", "检测正在运行中。")
             return
 
         params = self._get_params()
@@ -792,7 +912,7 @@ class MainWindow(QMainWindow):
 
     def _on_batch_progress(self, current: int, total: int):
         self.progress_bar.setValue(current)
-        self.status.showMessage(f"Detecting... {current}/{total}")
+        self.status.showMessage(f"检测中... {current}/{total}")
 
     def _on_image_done(self, index: int, result: DetectionResult):
         self._results[result.image_path] = result
@@ -803,7 +923,7 @@ class MainWindow(QMainWindow):
         self.progress_bar.setVisible(False)
         total_targets = sum(len(r.targets) for r in self._results.values())
         self.status.showMessage(
-            f"Batch done. {len(self._results)} images, {total_targets} total targets."
+            f"批量检测完成。{len(self._results)} 张影像，共 {total_targets} 个目标。"
         )
         path = self._current_path()
         if path:
@@ -813,19 +933,19 @@ class MainWindow(QMainWindow):
 
     def _export_json(self):
         if not self._results:
-            QMessageBox.information(self, "No Data", "No detection results to export.")
+            QMessageBox.information(self, "无数据", "无检测结果可导出。")
             return
 
         path, _ = QFileDialog.getSaveFileName(
-            self, "Export Results", "detection_results.json",
-            "JSON Files (*.json)"
+            self, "导出结果", "detection_results.json",
+            "JSON文件 (*.json)"
         )
         if not path:
             return
 
         results_list = list(self._results.values())
         save_results(results_list, path)
-        self.status.showMessage(f"Exported {len(results_list)} results to {path}")
+        self.status.showMessage(f"已导出 {len(results_list)} 个结果到 {path}")
 
     # --- Keyboard nudge ---
 
@@ -860,5 +980,5 @@ class MainWindow(QMainWindow):
         self._refresh_display()
         self.lbl_coord.setText(f"({tp.pixel_x:.2f}, {tp.pixel_y:.2f})")
         self.status.showMessage(
-            f"Moved {tp.id} to ({tp.pixel_x:.2f}, {tp.pixel_y:.2f})"
+            f"已移动 {tp.id} 至 ({tp.pixel_x:.2f}, {tp.pixel_y:.2f})"
         )

@@ -109,6 +109,50 @@ def _unpack_param_vector(
     return ext, intr_out, dist_out
 
 
+def _estimate_initial_rotation(
+    Xs: float, Ys: float, Zs: float,
+    points: list[MatchedPoint],
+) -> tuple[float, float, float]:
+    """Estimate initial rotation so that object points lie in front of the camera.
+
+    The collinearity equations require Zbar > 0 (point in front of camera).
+    With near-identity rotation (omega ≈ 0), Zbar ≈ Z - Zs.  When the camera
+    is above the objects (Zs > Z_mean) this is negative — the points are behind
+    the camera and the LM solver cannot converge from there.
+
+    Fix: choose omega ≈ π when Zs > Z_mean so that Zbar = -(Z - Zs) > 0.
+    """
+    X_mean = np.mean([p.obj_x for p in points])
+    Y_mean = np.mean([p.obj_y for p in points])
+    Z_mean = np.mean([p.obj_z for p in points])
+
+    dX = X_mean - Xs
+    dY = Y_mean - Ys
+    dZ = Z_mean - Zs
+    horiz = np.sqrt(dX**2 + dY**2)
+
+    if dZ < 0:
+        # Camera above objects — need omega ≈ π (looking down) so Zbar > 0
+        omega_init = np.pi + np.arctan2(horiz, dZ) if abs(dZ) > 1e-10 else np.pi
+    else:
+        # Camera below or level — omega ≈ 0 works
+        omega_init = np.arctan2(horiz, dZ) if abs(dZ) > 1e-10 else 0.0
+
+    # Tilt phi to aim at the centroid horizontally
+    phi_init = np.arctan2(-dX, -dZ) if abs(dZ) > 1e-10 else 0.0
+
+    kappa_init = 0.01
+
+    # Ensure none of the angles are exactly zero (rank-deficient Jacobian)
+    eps = 1e-4
+    if abs(omega_init) < eps:
+        omega_init = eps
+    if abs(phi_init) < eps:
+        phi_init = eps
+
+    return omega_init, phi_init, kappa_init
+
+
 def _estimate_initial_exterior(points: list[MatchedPoint]) -> ExteriorOrientation:
     """Estimate initial exterior orientation from matched point distribution.
 
@@ -121,14 +165,11 @@ def _estimate_initial_exterior(points: list[MatchedPoint]) -> ExteriorOrientatio
     Z_range = np.ptp([p.obj_z for p in points])
     offset = max(Z_range * 1.5, 3000.0)
 
-    # Use small non-zero initial angles to avoid rank-deficient Jacobian.
-    # When all angles are zero, the kappa derivative column vanishes entirely.
-    omega_init = 0.01
-    phi_init = 0.01
-    kappa_init = 0.01
+    Xs, Ys, Zs = X_mean, Y_mean, Z_mean + offset
+    omega_init, phi_init, kappa_init = _estimate_initial_rotation(Xs, Ys, Zs, points)
 
     return ExteriorOrientation(
-        Xs=X_mean, Ys=Y_mean, Zs=Z_mean + offset,
+        Xs=Xs, Ys=Ys, Zs=Zs,
         omega=omega_init, phi=phi_init, kappa=kappa_init,
     )
 
@@ -138,8 +179,8 @@ def space_resection(
     intrinsics: CameraIntrinsics,
     solve_config: SolveConfig,
     initial_exterior: ExteriorOrientation | None = None,
-    max_iter: int = 50,
-    tol: float = 1e-4,
+    max_iter: int = 500,
+    tol: float = 1e-6,
 ) -> ResectionResult:
     """Run single-image space resection.
 
@@ -169,6 +210,14 @@ def space_resection(
             Xs=initial_exterior.Xs, Ys=initial_exterior.Ys, Zs=initial_exterior.Zs,
             omega=initial_exterior.omega, phi=initial_exterior.phi, kappa=initial_exterior.kappa,
         )
+        # When the user provides real camera center coordinates but leaves
+        # rotation angles at (near) zero, object points may end up behind the
+        # camera (Zbar < 0).  Re-estimate rotation from geometry.
+        eps = 1e-4
+        if abs(ext.omega) < eps and abs(ext.phi) < eps and abs(ext.kappa) < eps:
+            ext.omega, ext.phi, ext.kappa = _estimate_initial_rotation(
+                ext.Xs, ext.Ys, ext.Zs, matched_points,
+            )
     dist = DistortionCoefficients()
     f = intrinsics.f
     x0 = intrinsics.x0
@@ -202,6 +251,14 @@ def space_resection(
             Ybar = a[3] * dX + a[4] * dY + a[5] * dZ
             Zbar = a[6] * dX + a[7] * dY + a[8] * dZ
 
+            # Guard against Zbar near zero (point behind camera or at projection center)
+            if abs(Zbar) < 1e-10:
+                L[2 * i] = 0.0
+                L[2 * i + 1] = 0.0
+                B[2 * i, :] = 0.0
+                B[2 * i + 1, :] = 0.0
+                continue
+
             # Distortion
             dx, dy = compute_distortion(
                 xi, yi, x0, y0,
@@ -220,21 +277,20 @@ def space_resection(
             # Since L = -F and we solve B @ delta = L, B = -dF/d(params)
             Zbar2 = Zbar * Zbar
 
-            # dF/dXs = -f/Zbar^2 * (a1*Zbar - a7*Xbar), so B = -dF/dXs = f/Zbar^2 * (...)
-            # dF/dXs = -f*(a1*Zbar - a9*Xbar)/Zbar^2, B = -dF/dXs
-            B[2*i, 0] = f / Zbar2 * (a[0] * Zbar - a[8] * Xbar)
-            B[2*i, 1] = f / Zbar2 * (a[1] * Zbar - a[8] * Xbar)
+            # Jacobian for Xs, Ys, Zs:
+            # F = xi - x0 + dx + f * Xbar/Zbar
+            # dXbar/dXs = -a[0], dZbar/dXs = -a[6]
+            # dF/dXs = f * (-a[0]*Zbar + a[6]*Xbar) / Zbar^2
+            # B = -dF/dXs = f/Zbar^2 * (a[0]*Zbar - a[6]*Xbar)
+            B[2*i, 0] = f / Zbar2 * (a[0] * Zbar - a[6] * Xbar)
+            B[2*i, 1] = f / Zbar2 * (a[1] * Zbar - a[7] * Xbar)
             B[2*i, 2] = f / Zbar2 * (a[2] * Zbar - a[8] * Xbar)
-            B[2*i+1, 0] = f / Zbar2 * (a[3] * Zbar - a[8] * Ybar)
-            B[2*i+1, 1] = f / Zbar2 * (a[4] * Zbar - a[8] * Ybar)
+            B[2*i+1, 0] = f / Zbar2 * (a[3] * Zbar - a[6] * Ybar)
+            B[2*i+1, 1] = f / Zbar2 * (a[4] * Zbar - a[7] * Ybar)
             B[2*i+1, 2] = f / Zbar2 * (a[5] * Zbar - a[8] * Ybar)
 
-            # dF/domega = -f/Zbar^2 * (dXbar_do * Zbar - Xbar * dZbar_do)
-            dXbar_do = dR_do[0, 0] * dX + dR_do[0, 1] * dY + dR_do[0, 2] * dZ
-            dYbar_do = dR_do[1, 0] * dX + dR_do[1, 1] * dY + dR_do[1, 2] * dZ
-            dZbar_do = dR_do[2, 0] * dX + dR_do[2, 1] * dY + dR_do[2, 2] * dZ
-            # Rotation angle derivatives: dF/dangle = f*(dXbar*Zbar - Xbar*dZbar)/Zbar^2
-            # B = -dF/dangle
+            # Rotation angle derivatives: B = -dF/dangle
+            # dF/dangle = f * (dXbar_dangle * Zbar - Xbar * dZbar_dangle) / Zbar^2
             dXbar_do = dR_do[0, 0] * dX + dR_do[0, 1] * dY + dR_do[0, 2] * dZ
             dYbar_do = dR_do[1, 0] * dX + dR_do[1, 1] * dY + dR_do[1, 2] * dZ
             dZbar_do = dR_do[2, 0] * dX + dR_do[2, 1] * dY + dR_do[2, 2] * dZ
@@ -269,11 +325,13 @@ def space_resection(
                 col += 1
 
             # Distortion parameter derivatives
+            # F = xi - x0 + dx + f * Xbar/Zbar, so dF/d(dist_param) = d(dx)/d(dist_param) = ddx
+            # B = -dF/d(dist_param) = -ddx (distortion is in mm, applied directly to image coords)
             dist_derivs = distortion_derivatives(xi, yi, x0, y0, dist.K1, dist.K2, dist.K3, solve_config)
             for pname in solve_config.distortion_param_names:
                 ddx, ddy = dist_derivs[pname]
-                B[2*i, col] = -f * ddx / Zbar
-                B[2*i+1, col] = -f * ddy / Zbar
+                B[2*i, col] = -ddx
+                B[2*i+1, col] = -ddy
                 col += 1
 
         # Current cost
@@ -390,11 +448,12 @@ def space_resection(
         Zbar = a[6]*dX + a[7]*dY + a[8]*dZ
         Zbar2 = Zbar * Zbar
 
-        B[2*i, 0] = f/Zbar2*(a[0]*Zbar - a[8]*Xbar)
-        B[2*i, 1] = f/Zbar2*(a[1]*Zbar - a[8]*Xbar)
+        # Jacobian for Xs, Ys, Zs (correct indices: a[6], a[7], a[8])
+        B[2*i, 0] = f/Zbar2*(a[0]*Zbar - a[6]*Xbar)
+        B[2*i, 1] = f/Zbar2*(a[1]*Zbar - a[7]*Xbar)
         B[2*i, 2] = f/Zbar2*(a[2]*Zbar - a[8]*Xbar)
-        B[2*i+1, 0] = f/Zbar2*(a[3]*Zbar - a[8]*Ybar)
-        B[2*i+1, 1] = f/Zbar2*(a[4]*Zbar - a[8]*Ybar)
+        B[2*i+1, 0] = f/Zbar2*(a[3]*Zbar - a[6]*Ybar)
+        B[2*i+1, 1] = f/Zbar2*(a[4]*Zbar - a[7]*Ybar)
         B[2*i+1, 2] = f/Zbar2*(a[5]*Zbar - a[8]*Ybar)
 
         dXb=dR_do[0,0]*dX+dR_do[0,1]*dY+dR_do[0,2]*dZ
@@ -423,7 +482,7 @@ def space_resection(
         dist_derivs = distortion_derivatives(xi, yi, x0, y0, dist.K1, dist.K2, dist.K3, solve_config)
         for pname in solve_config.distortion_param_names:
             ddx, ddy = dist_derivs[pname]
-            B[2*i,col]=-f*ddx/Zbar; B[2*i+1,col]=-f*ddy/Zbar; col+=1
+            B[2*i,col]=-ddx; B[2*i+1,col]=-ddy; col+=1
 
     BtB = B.T @ B
     dof = 2 * n - u

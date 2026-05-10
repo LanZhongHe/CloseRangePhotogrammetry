@@ -5,7 +5,7 @@ import numpy as np
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem,
     QComboBox, QLabel, QPushButton, QHeaderView, QSplitter, QWidget,
-    QMessageBox,
+    QMessageBox, QLineEdit,
 )
 from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtCore import Qt, pyqtSignal
@@ -35,6 +35,7 @@ class MatchingDialog(QDialog):
         image: np.ndarray | None,
         intrinsics: CameraIntrinsics,
         solve_config: SolveConfig,
+        previous_matches: dict[int, str] | None = None,
         parent=None,
     ):
         super().__init__(parent)
@@ -47,9 +48,11 @@ class MatchingDialog(QDialog):
         self._image = image
         self._intrinsics = intrinsics
         self._solve_config = solve_config
+        self._previous_matches = previous_matches or {}
 
         self._combos: list[QComboBox] = []
         self._init_ui()
+        self._restore_previous()
 
     def _init_ui(self):
         layout = QHBoxLayout(self)
@@ -83,8 +86,9 @@ class MatchingDialog(QDialog):
             py_item.setFlags(py_item.flags() & ~Qt.ItemIsEditable)
             self._table.setItem(i, 2, py_item)
 
-            # Control field combo
+            # Control field combo (editable so user can type point ID)
             combo = QComboBox()
+            combo.setEditable(True)
             combo.addItem("")  # empty = unmatched
             for cid in self._control_ids:
                 combo.addItem(cid)
@@ -141,6 +145,18 @@ class MatchingDialog(QDialog):
 
         layout.addWidget(splitter)
         self._update_status()
+
+    def _restore_previous(self):
+        """Restore previous matching selections."""
+        for row_idx, cid in self._previous_matches.items():
+            if 0 <= row_idx < len(self._combos):
+                combo = self._combos[row_idx]
+                idx = combo.findText(cid)
+                if idx >= 0:
+                    combo.setCurrentIndex(idx)
+                else:
+                    combo.setEditText(cid)
+        self._highlight_duplicates()
 
     def _on_combo_changed(self, row: int, text: str):
         """Update object coordinates when combo selection changes."""
@@ -243,30 +259,36 @@ class MatchingDialog(QDialog):
         self._highlight_duplicates()
 
     def _update_status(self):
-        """Update status label with match counts."""
+        """Update status label with match count."""
         matched = sum(1 for c in self._combos if c.currentText())
-        min_pts = self._solve_config.min_points
-        redundancy = matched * 2 - self._solve_config.num_unknowns
-        self._status_label.setText(
-            f"已匹配 {matched} / 最少需要 {min_pts} / 冗余度 {redundancy}"
-        )
-        self._ok_btn.setEnabled(matched >= min_pts)
+        self._status_label.setText(f"已匹配 {matched}")
+        self._ok_btn.setEnabled(matched >= 2)
 
     def get_matched_points(self) -> list[MatchedPoint]:
         """Return the list of successfully matched point pairs."""
         result = []
         for i, combo in enumerate(self._combos):
-            cid = combo.currentText()
+            cid = combo.currentText().strip()
             if not cid or cid not in self._control_field:
                 continue
             pt = self._detected[i]
             ox, oy, oz = self._control_field[cid]
             x_mm, y_mm = pixel_to_image_coords(pt.pixel_x, pt.pixel_y, self._intrinsics)
             result.append(MatchedPoint(
+                detected_id=pt.id,
                 control_id=cid,
                 pixel_x=pt.pixel_x, pixel_y=pt.pixel_y,
                 image_x_mm=x_mm, image_y_mm=y_mm,
                 obj_x=ox, obj_y=oy, obj_z=oz,
                 is_manual=pt.source == "manual",
             ))
+        return result
+
+    def get_matches_dict(self) -> dict[int, str]:
+        """Return current matching state as {row_index: control_id} for persistence."""
+        result = {}
+        for i, combo in enumerate(self._combos):
+            cid = combo.currentText().strip()
+            if cid:
+                result[i] = cid
         return result

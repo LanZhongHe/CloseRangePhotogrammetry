@@ -46,6 +46,7 @@ class ResectionPanel(QWidget):
         self._f_spin.setDecimals(3)
         row1.addWidget(self._f_spin)
         self._solve_f = QCheckBox("求解")
+        self._solve_f.toggled.connect(self._update_info)
         row1.addWidget(self._solve_f)
         intr_layout.addLayout(row1)
 
@@ -85,6 +86,7 @@ class ResectionPanel(QWidget):
         self._x0_spin.setDecimals(4)
         row4.addWidget(self._x0_spin)
         self._solve_x0 = QCheckBox("求解")
+        self._solve_x0.toggled.connect(self._update_info)
         row4.addWidget(self._solve_x0)
         row4.addWidget(QLabel("y0 (mm):"))
         self._y0_spin = QDoubleSpinBox()
@@ -93,6 +95,7 @@ class ResectionPanel(QWidget):
         self._y0_spin.setDecimals(4)
         row4.addWidget(self._y0_spin)
         self._solve_y0 = QCheckBox("求解")
+        self._solve_y0.toggled.connect(self._update_info)
         row4.addWidget(self._solve_y0)
         intr_layout.addLayout(row4)
 
@@ -126,6 +129,7 @@ class ResectionPanel(QWidget):
                    self._solve_a1, self._solve_a2,
                    self._solve_b1, self._solve_b2]:
             check_row.addWidget(cb)
+            cb.toggled.connect(self._update_info)
         dist_layout.addLayout(check_row)
 
         layout.addWidget(dist_group)
@@ -210,12 +214,20 @@ class ResectionPanel(QWidget):
     def _auto_estimate(self):
         if not self._matched_points:
             return
+        from src.resection import _estimate_initial_rotation
         X = [p.obj_x for p in self._matched_points]
         Y = [p.obj_y for p in self._matched_points]
         Z = [p.obj_z for p in self._matched_points]
-        self._xs_spin.setValue(np.mean(X))
-        self._ys_spin.setValue(np.mean(Y))
-        self._zs_spin.setValue(np.mean(Z) + max(np.ptp(Z) * 1.5, 3000))
+        xs = np.mean(X)
+        ys = np.mean(Y)
+        zs = np.mean(Z) + max(np.ptp(Z) * 1.5, 3000)
+        self._xs_spin.setValue(xs)
+        self._ys_spin.setValue(ys)
+        self._zs_spin.setValue(zs)
+        omega, phi, kappa = _estimate_initial_rotation(xs, ys, zs, self._matched_points)
+        self._omega_spin.setValue(omega)
+        self._phi_spin.setValue(phi)
+        self._kappa_spin.setValue(kappa)
 
     def _get_solve_config(self) -> SolveConfig:
         return SolveConfig(

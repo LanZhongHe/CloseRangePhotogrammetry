@@ -1,0 +1,2114 @@
+[
+  {
+    "image": "D:/CodeFiles/Python/CloseRangePhotogrammetry/photo\\DSC_0035.JPG",
+    "image_size": [
+      8256,
+      5504
+    ],
+    "detection_time": "2026-05-08T16:01:57.716145",
+    "targets": [
+      {
+        "id": "001",
+        "pixel_x": 1664.4575,
+        "pixel_y": 125.431,
+        "confidence": 0.9707,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 58.76,
+          "semi_minor": 55.53,
+          "angle_deg": 19.0
+        },
+        "eccentricity": 0.3271
+      },
+      {
+        "id": "002",
+        "pixel_x": 5210.1287,
+        "pixel_y": 424.9723,
+        "confidence": 0.9698,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 53.41,
+          "semi_minor": 50.8,
+          "angle_deg": 52.64
+        },
+        "eccentricity": 0.3083
+      },
+      {
+        "id": "003",
+        "pixel_x": 7084.4832,
+        "pixel_y": 453.801,
+        "confidence": 0.9669,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 55.87,
+          "semi_minor": 53.63,
+          "angle_deg": 65.75
+        },
+        "eccentricity": 0.2803
+      },
+      {
+        "id": "004",
+        "pixel_x": 6726.4041,
+        "pixel_y": 470.4638,
+        "confidence": 0.9401,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 21.85,
+          "semi_minor": 19.3,
+          "angle_deg": 129.12
+        },
+        "eccentricity": 0.4687
+      },
+      {
+        "id": "005",
+        "pixel_x": 5751.736,
+        "pixel_y": 471.8136,
+        "confidence": 0.9676,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 54.33,
+          "semi_minor": 52.58,
+          "angle_deg": 49.83
+        },
+        "eccentricity": 0.2522
+      },
+      {
+        "id": "006",
+        "pixel_x": 4492.2674,
+        "pixel_y": 488.3795,
+        "confidence": 0.9673,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 52.7,
+          "semi_minor": 51.2,
+          "angle_deg": 33.11
+        },
+        "eccentricity": 0.2367
+      },
+      {
+        "id": "007",
+        "pixel_x": 2675.2679,
+        "pixel_y": 508.9387,
+        "confidence": 0.9705,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 50.13,
+          "semi_minor": 48.1,
+          "angle_deg": 19.4
+        },
+        "eccentricity": 0.2817
+      },
+      {
+        "id": "008",
+        "pixel_x": 3280.6494,
+        "pixel_y": 512.7712,
+        "confidence": 0.9632,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 51.35,
+          "semi_minor": 49.65,
+          "angle_deg": 31.77
+        },
+        "eccentricity": 0.2553
+      },
+      {
+        "id": "009",
+        "pixel_x": 2053.3302,
+        "pixel_y": 530.437,
+        "confidence": 0.9684,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 50.85,
+          "semi_minor": 48.31,
+          "angle_deg": 13.81
+        },
+        "eccentricity": 0.3121
+      },
+      {
+        "id": "010",
+        "pixel_x": 660.1,
+        "pixel_y": 553.7655,
+        "confidence": 0.9687,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 48.99,
+          "semi_minor": 48.55,
+          "angle_deg": 166.46
+        },
+        "eccentricity": 0.1336
+      },
+      {
+        "id": "011",
+        "pixel_x": 7492.6988,
+        "pixel_y": 610.601,
+        "confidence": 0.9698,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 56.65,
+          "semi_minor": 52.08,
+          "angle_deg": 57.97
+        },
+        "eccentricity": 0.3935
+      },
+      {
+        "id": "012",
+        "pixel_x": 263.7529,
+        "pixel_y": 738.591,
+        "confidence": 0.9558,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 25.12,
+          "semi_minor": 19.61,
+          "angle_deg": 117.95
+        },
+        "eccentricity": 0.625
+      },
+      {
+        "id": "013",
+        "pixel_x": 4786.6947,
+        "pixel_y": 803.1541,
+        "confidence": 0.968,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 44.54,
+          "semi_minor": 42.56,
+          "angle_deg": 23.73
+        },
+        "eccentricity": 0.2943
+      },
+      {
+        "id": "014",
+        "pixel_x": 5199.4459,
+        "pixel_y": 1225.3919,
+        "confidence": 0.9698,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 52.98,
+          "semi_minor": 50.54,
+          "angle_deg": 59.52
+        },
+        "eccentricity": 0.3001
+      },
+      {
+        "id": "015",
+        "pixel_x": 2667.8149,
+        "pixel_y": 1251.4546,
+        "confidence": 0.9679,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 32.98,
+          "semi_minor": 31.26,
+          "angle_deg": 12.13
+        },
+        "eccentricity": 0.3183
+      },
+      {
+        "id": "016",
+        "pixel_x": 1645.8399,
+        "pixel_y": 1341.7627,
+        "confidence": 0.9688,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 38.1,
+          "semi_minor": 35.7,
+          "angle_deg": 179.84
+        },
+        "eccentricity": 0.3492
+      },
+      {
+        "id": "017",
+        "pixel_x": 8108.4114,
+        "pixel_y": 1375.4162,
+        "confidence": 0.9706,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 46.65,
+          "semi_minor": 44.81,
+          "angle_deg": 50.3
+        },
+        "eccentricity": 0.2777
+      },
+      {
+        "id": "018",
+        "pixel_x": 7479.3543,
+        "pixel_y": 1711.0546,
+        "confidence": 0.9688,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 36.53,
+          "semi_minor": 34.77,
+          "angle_deg": 70.3
+        },
+        "eccentricity": 0.307
+      },
+      {
+        "id": "019",
+        "pixel_x": 2053.4175,
+        "pixel_y": 1752.2466,
+        "confidence": 0.8963,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 36.25,
+          "semi_minor": 26.5,
+          "angle_deg": 14.99
+        },
+        "eccentricity": 0.6823
+      },
+      {
+        "id": "020",
+        "pixel_x": 800.9839,
+        "pixel_y": 1754.2233,
+        "confidence": 0.9703,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 33.68,
+          "semi_minor": 31.81,
+          "angle_deg": 5.64
+        },
+        "eccentricity": 0.3282
+      },
+      {
+        "id": "021",
+        "pixel_x": 3255.4197,
+        "pixel_y": 1752.4928,
+        "confidence": 0.9705,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 34.97,
+          "semi_minor": 34.12,
+          "angle_deg": 12.3
+        },
+        "eccentricity": 0.2196
+      },
+      {
+        "id": "022",
+        "pixel_x": 4477.3955,
+        "pixel_y": 1753.3241,
+        "confidence": 0.9687,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 35.51,
+          "semi_minor": 35.15,
+          "angle_deg": 34.58
+        },
+        "eccentricity": 0.1422
+      },
+      {
+        "id": "023",
+        "pixel_x": 7021.3782,
+        "pixel_y": 1755.3896,
+        "confidence": 0.9693,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 37.72,
+          "semi_minor": 36.53,
+          "angle_deg": 81.46
+        },
+        "eccentricity": 0.2495
+      },
+      {
+        "id": "024",
+        "pixel_x": 5747.3251,
+        "pixel_y": 1756.505,
+        "confidence": 0.9697,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 36.65,
+          "semi_minor": 35.87,
+          "angle_deg": 61.38
+        },
+        "eccentricity": 0.2044
+      },
+      {
+        "id": "025",
+        "pixel_x": 2164.4353,
+        "pixel_y": 1833.4712,
+        "confidence": 0.9696,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 42.63,
+          "semi_minor": 41.46,
+          "angle_deg": 171.51
+        },
+        "eccentricity": 0.2331
+      },
+      {
+        "id": "026",
+        "pixel_x": 2662.0534,
+        "pixel_y": 1977.3962,
+        "confidence": 0.97,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 49.81,
+          "semi_minor": 48.58,
+          "angle_deg": 25.27
+        },
+        "eccentricity": 0.2208
+      },
+      {
+        "id": "027",
+        "pixel_x": 5189.3637,
+        "pixel_y": 1999.3835,
+        "confidence": 0.9704,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 33.85,
+          "semi_minor": 33.51,
+          "angle_deg": 37.17
+        },
+        "eccentricity": 0.1414
+      },
+      {
+        "id": "028",
+        "pixel_x": 648.4202,
+        "pixel_y": 2051.4636,
+        "confidence": 0.9686,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 31.67,
+          "semi_minor": 30.94,
+          "angle_deg": 159.33
+        },
+        "eccentricity": 0.2142
+      },
+      {
+        "id": "029",
+        "pixel_x": 6605.657,
+        "pixel_y": 2231.4805,
+        "confidence": 0.9616,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 43.08,
+          "semi_minor": 39.74,
+          "angle_deg": 87.16
+        },
+        "eccentricity": 0.3865
+      },
+      {
+        "id": "030",
+        "pixel_x": 6603.4425,
+        "pixel_y": 2578.5293,
+        "confidence": 0.9679,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 43.4,
+          "semi_minor": 40.06,
+          "angle_deg": 83.4
+        },
+        "eccentricity": 0.3845
+      },
+      {
+        "id": "031",
+        "pixel_x": 385.5055,
+        "pixel_y": 2657.4839,
+        "confidence": 0.9698,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 55.93,
+          "semi_minor": 53.44,
+          "angle_deg": 170.19
+        },
+        "eccentricity": 0.2947
+      },
+      {
+        "id": "032",
+        "pixel_x": 6623.3505,
+        "pixel_y": 2730.3917,
+        "confidence": 0.8562,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 35.32,
+          "semi_minor": 26.27,
+          "angle_deg": 112.78
+        },
+        "eccentricity": 0.6684
+      },
+      {
+        "id": "033",
+        "pixel_x": 7455.4241,
+        "pixel_y": 2764.3469,
+        "confidence": 0.9693,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 55.43,
+          "semi_minor": 53.62,
+          "angle_deg": 89.39
+        },
+        "eccentricity": 0.2535
+      },
+      {
+        "id": "034",
+        "pixel_x": 637.8272,
+        "pixel_y": 2794.878,
+        "confidence": 0.9684,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 48.73,
+          "semi_minor": 47.75,
+          "angle_deg": 144.56
+        },
+        "eccentricity": 0.1995
+      },
+      {
+        "id": "035",
+        "pixel_x": 5179.2965,
+        "pixel_y": 2804.2818,
+        "confidence": 0.9687,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 52.37,
+          "semi_minor": 51.42,
+          "angle_deg": 87.81
+        },
+        "eccentricity": 0.1894
+      },
+      {
+        "id": "036",
+        "pixel_x": 2148.3419,
+        "pixel_y": 2807.3638,
+        "confidence": 0.9692,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 42.34,
+          "semi_minor": 40.83,
+          "angle_deg": 176.6
+        },
+        "eccentricity": 0.2653
+      },
+      {
+        "id": "037",
+        "pixel_x": 4759.9648,
+        "pixel_y": 2844.7016,
+        "confidence": 0.9681,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 44.35,
+          "semi_minor": 43.59,
+          "angle_deg": 148.66
+        },
+        "eccentricity": 0.184
+      },
+      {
+        "id": "038",
+        "pixel_x": 775.6874,
+        "pixel_y": 2957.672,
+        "confidence": 0.9688,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 49.35,
+          "semi_minor": 46.79,
+          "angle_deg": 177.05
+        },
+        "eccentricity": 0.3179
+      },
+      {
+        "id": "039",
+        "pixel_x": 1997.0653,
+        "pixel_y": 2969.1305,
+        "confidence": 0.9689,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 50.48,
+          "semi_minor": 48.33,
+          "angle_deg": 175.55
+        },
+        "eccentricity": 0.2893
+      },
+      {
+        "id": "040",
+        "pixel_x": 4441.2355,
+        "pixel_y": 3009.2199,
+        "confidence": 0.9677,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 52.16,
+          "semi_minor": 51.87,
+          "angle_deg": 169.86
+        },
+        "eccentricity": 0.1066
+      },
+      {
+        "id": "041",
+        "pixel_x": 5772.4639,
+        "pixel_y": 3038.3758,
+        "confidence": 0.9698,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 53.81,
+          "semi_minor": 53.21,
+          "angle_deg": 97.27
+        },
+        "eccentricity": 0.1496
+      },
+      {
+        "id": "042",
+        "pixel_x": 7022.0983,
+        "pixel_y": 3059.8804,
+        "confidence": 0.9696,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 55.58,
+          "semi_minor": 53.74,
+          "angle_deg": 91.17
+        },
+        "eccentricity": 0.2552
+      },
+      {
+        "id": "043",
+        "pixel_x": 418.49,
+        "pixel_y": 3583.4368,
+        "confidence": 0.9681,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 55.68,
+          "semi_minor": 50.93,
+          "angle_deg": 165.72
+        },
+        "eccentricity": 0.4041
+      },
+      {
+        "id": "044",
+        "pixel_x": 632.2192,
+        "pixel_y": 3717.5357,
+        "confidence": 0.9697,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 48.36,
+          "semi_minor": 48.07,
+          "angle_deg": 173.27
+        },
+        "eccentricity": 0.1094
+      },
+      {
+        "id": "045",
+        "pixel_x": 5166.7351,
+        "pixel_y": 3797.1796,
+        "confidence": 0.9709,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 52.36,
+          "semi_minor": 51.18,
+          "angle_deg": 106.02
+        },
+        "eccentricity": 0.2106
+      },
+      {
+        "id": "046",
+        "pixel_x": 7440.6297,
+        "pixel_y": 3831.6649,
+        "confidence": 0.9693,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 55.65,
+          "semi_minor": 52.85,
+          "angle_deg": 114.22
+        },
+        "eccentricity": 0.3134
+      },
+      {
+        "id": "047",
+        "pixel_x": 756.1288,
+        "pixel_y": 4159.115,
+        "confidence": 0.9682,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 33.56,
+          "semi_minor": 31.52,
+          "angle_deg": 169.39
+        },
+        "eccentricity": 0.3432
+      },
+      {
+        "id": "048",
+        "pixel_x": 4437.1549,
+        "pixel_y": 4273.1741,
+        "confidence": 0.9681,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 35.59,
+          "semi_minor": 34.83,
+          "angle_deg": 132.72
+        },
+        "eccentricity": 0.2048
+      },
+      {
+        "id": "049",
+        "pixel_x": 5750.3603,
+        "pixel_y": 4318.4279,
+        "confidence": 0.9689,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 36.76,
+          "semi_minor": 35.81,
+          "angle_deg": 122.21
+        },
+        "eccentricity": 0.2262
+      },
+      {
+        "id": "050",
+        "pixel_x": 7019.3028,
+        "pixel_y": 4363.5361,
+        "confidence": 0.9675,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 37.96,
+          "semi_minor": 36.31,
+          "angle_deg": 108.08
+        },
+        "eccentricity": 0.2922
+      },
+      {
+        "id": "051",
+        "pixel_x": 459.4855,
+        "pixel_y": 4606.3946,
+        "confidence": 0.9665,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 55.67,
+          "semi_minor": 52.12,
+          "angle_deg": 156.72
+        },
+        "eccentricity": 0.3514
+      },
+      {
+        "id": "052",
+        "pixel_x": 626.3933,
+        "pixel_y": 4608.4198,
+        "confidence": 0.9681,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 31.42,
+          "semi_minor": 30.96,
+          "angle_deg": 140.41
+        },
+        "eccentricity": 0.1719
+      },
+      {
+        "id": "053",
+        "pixel_x": 5151.6727,
+        "pixel_y": 4783.9768,
+        "confidence": 0.9696,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 34.32,
+          "semi_minor": 32.62,
+          "angle_deg": 135.7
+        },
+        "eccentricity": 0.3107
+      },
+      {
+        "id": "054",
+        "pixel_x": 7421.4191,
+        "pixel_y": 4881.6106,
+        "confidence": 0.9668,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 36.9,
+          "semi_minor": 33.35,
+          "angle_deg": 127.93
+        },
+        "eccentricity": 0.428
+      },
+      {
+        "id": "055",
+        "pixel_x": 2129.2076,
+        "pixel_y": 5303.5923,
+        "confidence": 0.9675,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 42.41,
+          "semi_minor": 40.26,
+          "angle_deg": 150.65
+        },
+        "eccentricity": 0.3143
+      },
+      {
+        "id": "056",
+        "pixel_x": 4729.3375,
+        "pixel_y": 5427.4018,
+        "confidence": 0.9695,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 44.69,
+          "semi_minor": 42.06,
+          "angle_deg": 145.73
+        },
+        "eccentricity": 0.338
+      },
+      {
+        "id": "057",
+        "pixel_x": 1959.6688,
+        "pixel_y": 5444.1052,
+        "confidence": 0.9679,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 51.12,
+          "semi_minor": 48.37,
+          "angle_deg": 161.51
+        },
+        "eccentricity": 0.3239
+      },
+      {
+        "id": "900",
+        "pixel_x": 1585.4644,
+        "pixel_y": 2735.4035,
+        "confidence": 1.0,
+        "source": "manual",
+        "subpixel_method": "manual"
+      },
+      {
+        "id": "901",
+        "pixel_x": 8089.5756,
+        "pixel_y": 2748.5378,
+        "confidence": 1.0,
+        "source": "manual",
+        "subpixel_method": "manual"
+      }
+    ]
+  },
+  {
+    "image": "D:/CodeFiles/Python/CloseRangePhotogrammetry/photo\\DSC_0037.JPG",
+    "image_size": [
+      8256,
+      5504
+    ],
+    "detection_time": "2026-05-08T16:01:59.721021",
+    "targets": [
+      {
+        "id": "001",
+        "pixel_x": 5979.0199,
+        "pixel_y": 166.397,
+        "confidence": 0.9567,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 22.19,
+          "semi_minor": 19.36,
+          "angle_deg": 58.57
+        },
+        "eccentricity": 0.4892
+      },
+      {
+        "id": "002",
+        "pixel_x": 188.4072,
+        "pixel_y": 194.8542,
+        "confidence": 0.9627,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 57.9,
+          "semi_minor": 53.45,
+          "angle_deg": 118.57
+        },
+        "eccentricity": 0.3843
+      },
+      {
+        "id": "003",
+        "pixel_x": 1343.0378,
+        "pixel_y": 229.023,
+        "confidence": 0.968,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 54.73,
+          "semi_minor": 50.63,
+          "angle_deg": 126.03
+        },
+        "eccentricity": 0.3797
+      },
+      {
+        "id": "004",
+        "pixel_x": 1631.2834,
+        "pixel_y": 284.2899,
+        "confidence": 0.968,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 54.6,
+          "semi_minor": 51.27,
+          "angle_deg": 129.29
+        },
+        "eccentricity": 0.3443
+      },
+      {
+        "id": "005",
+        "pixel_x": 5905.1088,
+        "pixel_y": 333.6435,
+        "confidence": 0.9549,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 46.41,
+          "semi_minor": 37.63,
+          "angle_deg": 39.54
+        },
+        "eccentricity": 0.5852
+      },
+      {
+        "id": "006",
+        "pixel_x": 2919.7206,
+        "pixel_y": 363.6571,
+        "confidence": 0.9413,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 51.76,
+          "semi_minor": 48.46,
+          "angle_deg": 149.84
+        },
+        "eccentricity": 0.3511
+      },
+      {
+        "id": "007",
+        "pixel_x": 5764.4263,
+        "pixel_y": 448.564,
+        "confidence": 0.9666,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 46.34,
+          "semi_minor": 43.61,
+          "angle_deg": 165.1
+        },
+        "eccentricity": 0.3384
+      },
+      {
+        "id": "008",
+        "pixel_x": 5171.6008,
+        "pixel_y": 497.7927,
+        "confidence": 0.9664,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 48.61,
+          "semi_minor": 44.28,
+          "angle_deg": 163.85
+        },
+        "eccentricity": 0.4125
+      },
+      {
+        "id": "009",
+        "pixel_x": 1962.1369,
+        "pixel_y": 508.3008,
+        "confidence": 0.9694,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 44.59,
+          "semi_minor": 41.98,
+          "angle_deg": 138.5
+        },
+        "eccentricity": 0.3372
+      },
+      {
+        "id": "010",
+        "pixel_x": 5971.1864,
+        "pixel_y": 558.4244,
+        "confidence": 0.892,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 56.85,
+          "semi_minor": 38.06,
+          "angle_deg": 111.51
+        },
+        "eccentricity": 0.7427
+      },
+      {
+        "id": "011",
+        "pixel_x": 6229.7927,
+        "pixel_y": 563.8011,
+        "confidence": 0.9677,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 47.06,
+          "semi_minor": 41.76,
+          "angle_deg": 165.86
+        },
+        "eccentricity": 0.461
+      },
+      {
+        "id": "012",
+        "pixel_x": 7169.2531,
+        "pixel_y": 618.1131,
+        "confidence": 0.9662,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 45.74,
+          "semi_minor": 39.64,
+          "angle_deg": 168.69
+        },
+        "eccentricity": 0.4988
+      },
+      {
+        "id": "013",
+        "pixel_x": 4789.5258,
+        "pixel_y": 665.6828,
+        "confidence": 0.9669,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 61.91,
+          "semi_minor": 57.51,
+          "angle_deg": 161.04
+        },
+        "eccentricity": 0.3701
+      },
+      {
+        "id": "014",
+        "pixel_x": 8157.1214,
+        "pixel_y": 681.2328,
+        "confidence": 0.9664,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 44.54,
+          "semi_minor": 37.62,
+          "angle_deg": 170.77
+        },
+        "eccentricity": 0.5353
+      },
+      {
+        "id": "015",
+        "pixel_x": 7488.398,
+        "pixel_y": 739.4535,
+        "confidence": 0.9696,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 45.21,
+          "semi_minor": 43.76,
+          "angle_deg": 77.81
+        },
+        "eccentricity": 0.2516
+      },
+      {
+        "id": "016",
+        "pixel_x": 6993.2515,
+        "pixel_y": 792.2726,
+        "confidence": 0.97,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 37.94,
+          "semi_minor": 35.01,
+          "angle_deg": 169.98
+        },
+        "eccentricity": 0.3854
+      },
+      {
+        "id": "017",
+        "pixel_x": 3535.3126,
+        "pixel_y": 1123.5088,
+        "confidence": 0.9668,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 37.93,
+          "semi_minor": 36.25,
+          "angle_deg": 162.03
+        },
+        "eccentricity": 0.2947
+      },
+      {
+        "id": "018",
+        "pixel_x": 5763.4872,
+        "pixel_y": 1161.4484,
+        "confidence": 0.9683,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 45.98,
+          "semi_minor": 44.07,
+          "angle_deg": 154.11
+        },
+        "eccentricity": 0.2855
+      },
+      {
+        "id": "019",
+        "pixel_x": 193.468,
+        "pixel_y": 1515.401,
+        "confidence": 0.9669,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 39.46,
+          "semi_minor": 36.82,
+          "angle_deg": 104.53
+        },
+        "eccentricity": 0.3596
+      },
+      {
+        "id": "020",
+        "pixel_x": 1653.3477,
+        "pixel_y": 1555.2485,
+        "confidence": 0.9695,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 36.69,
+          "semi_minor": 35.3,
+          "angle_deg": 121.87
+        },
+        "eccentricity": 0.2729
+      },
+      {
+        "id": "021",
+        "pixel_x": 2908.3282,
+        "pixel_y": 1590.51,
+        "confidence": 0.9704,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 35.02,
+          "semi_minor": 33.81,
+          "angle_deg": 147.94
+        },
+        "eccentricity": 0.26
+      },
+      {
+        "id": "022",
+        "pixel_x": 4789.4872,
+        "pixel_y": 1618.5118,
+        "confidence": 0.9681,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 40.66,
+          "semi_minor": 37.43,
+          "angle_deg": 174.31
+        },
+        "eccentricity": 0.3903
+      },
+      {
+        "id": "023",
+        "pixel_x": 4075.3038,
+        "pixel_y": 1624.4602,
+        "confidence": 0.9704,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 33.65,
+          "semi_minor": 31.93,
+          "angle_deg": 163.03
+        },
+        "eccentricity": 0.3157
+      },
+      {
+        "id": "024",
+        "pixel_x": 7490.0666,
+        "pixel_y": 1648.181,
+        "confidence": 0.9694,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 29.15,
+          "semi_minor": 28.83,
+          "angle_deg": 96.22
+        },
+        "eccentricity": 0.1472
+      },
+      {
+        "id": "025",
+        "pixel_x": 5182.4766,
+        "pixel_y": 1657.4406,
+        "confidence": 0.9655,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 32.79,
+          "semi_minor": 30.35,
+          "angle_deg": 172.66
+        },
+        "eccentricity": 0.3781
+      },
+      {
+        "id": "026",
+        "pixel_x": 6988.4539,
+        "pixel_y": 1675.4939,
+        "confidence": 0.9695,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 58.07,
+          "semi_minor": 55.19,
+          "angle_deg": 174.03
+        },
+        "eccentricity": 0.311
+      },
+      {
+        "id": "027",
+        "pixel_x": 6195.4069,
+        "pixel_y": 1685.4834,
+        "confidence": 0.9687,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 31.66,
+          "semi_minor": 28.56,
+          "angle_deg": 172.07
+        },
+        "eccentricity": 0.4312
+      },
+      {
+        "id": "028",
+        "pixel_x": 7215.5171,
+        "pixel_y": 1718.3839,
+        "confidence": 0.9706,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 30.78,
+          "semi_minor": 26.79,
+          "angle_deg": 176.46
+        },
+        "eccentricity": 0.4923
+      },
+      {
+        "id": "029",
+        "pixel_x": 8151.5079,
+        "pixel_y": 1744.4357,
+        "confidence": 0.9655,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 30.23,
+          "semi_minor": 25.75,
+          "angle_deg": 174.41
+        },
+        "eccentricity": 0.5238
+      },
+      {
+        "id": "030",
+        "pixel_x": 1344.9234,
+        "pixel_y": 1821.2572,
+        "confidence": 0.9669,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 34.53,
+          "semi_minor": 33.5,
+          "angle_deg": 124.69
+        },
+        "eccentricity": 0.2429
+      },
+      {
+        "id": "031",
+        "pixel_x": 5763.171,
+        "pixel_y": 1852.2041,
+        "confidence": 0.9686,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 30.01,
+          "semi_minor": 28.26,
+          "angle_deg": 164.7
+        },
+        "eccentricity": 0.3367
+      },
+      {
+        "id": "032",
+        "pixel_x": 5620.4253,
+        "pixel_y": 2329.4625,
+        "confidence": 0.9691,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 52.76,
+          "semi_minor": 46.51,
+          "angle_deg": 4.72
+        },
+        "eccentricity": 0.4721
+      },
+      {
+        "id": "033",
+        "pixel_x": 7479.5477,
+        "pixel_y": 2518.0451,
+        "confidence": 0.9694,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 45.31,
+          "semi_minor": 44.22,
+          "angle_deg": 74.02
+        },
+        "eccentricity": 0.2187
+      },
+      {
+        "id": "034",
+        "pixel_x": 4784.9568,
+        "pixel_y": 2543.5001,
+        "confidence": 0.9684,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 40.15,
+          "semi_minor": 37.37,
+          "angle_deg": 178.37
+        },
+        "eccentricity": 0.3655
+      },
+      {
+        "id": "035",
+        "pixel_x": 5760.3976,
+        "pixel_y": 2569.3727,
+        "confidence": 0.9696,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 46.17,
+          "semi_minor": 44.52,
+          "angle_deg": 5.32
+        },
+        "eccentricity": 0.2651
+      },
+      {
+        "id": "036",
+        "pixel_x": 1339.3105,
+        "pixel_y": 2611.2864,
+        "confidence": 0.9699,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 53.55,
+          "semi_minor": 51.7,
+          "angle_deg": 85.82
+        },
+        "eccentricity": 0.2608
+      },
+      {
+        "id": "037",
+        "pixel_x": 7220.9729,
+        "pixel_y": 2810.9033,
+        "confidence": 0.9664,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 45.04,
+          "semi_minor": 39.32,
+          "angle_deg": 1.59
+        },
+        "eccentricity": 0.4878
+      },
+      {
+        "id": "038",
+        "pixel_x": 6209.814,
+        "pixel_y": 2812.9084,
+        "confidence": 0.968,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 46.1,
+          "semi_minor": 41.77,
+          "angle_deg": 3.1
+        },
+        "eccentricity": 0.4229
+      },
+      {
+        "id": "039",
+        "pixel_x": 4057.245,
+        "pixel_y": 2813.2974,
+        "confidence": 0.9681,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 49.32,
+          "semi_minor": 47.19,
+          "angle_deg": 2.03
+        },
+        "eccentricity": 0.2906
+      },
+      {
+        "id": "040",
+        "pixel_x": 8151.894,
+        "pixel_y": 2814.4556,
+        "confidence": 0.9657,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 44.46,
+          "semi_minor": 37.98,
+          "angle_deg": 1.57
+        },
+        "eccentricity": 0.52
+      },
+      {
+        "id": "041",
+        "pixel_x": 5215.2983,
+        "pixel_y": 2815.1693,
+        "confidence": 0.9683,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 48.04,
+          "semi_minor": 44.54,
+          "angle_deg": 1.08
+        },
+        "eccentricity": 0.3751
+      },
+      {
+        "id": "042",
+        "pixel_x": 1600.331,
+        "pixel_y": 2822.205,
+        "confidence": 0.9695,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 53.71,
+          "semi_minor": 52.66,
+          "angle_deg": 89.64
+        },
+        "eccentricity": 0.1974
+      },
+      {
+        "id": "043",
+        "pixel_x": 177.5506,
+        "pixel_y": 2835.7601,
+        "confidence": 0.9704,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 57.68,
+          "semi_minor": 54.31,
+          "angle_deg": 88.11
+        },
+        "eccentricity": 0.3372
+      },
+      {
+        "id": "044",
+        "pixel_x": 5628.4324,
+        "pixel_y": 3202.4299,
+        "confidence": 0.9663,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 52.11,
+          "semi_minor": 47.81,
+          "angle_deg": 5.36
+        },
+        "eccentricity": 0.3974
+      },
+      {
+        "id": "045",
+        "pixel_x": 7481.7378,
+        "pixel_y": 3399.3606,
+        "confidence": 0.9667,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 45.28,
+          "semi_minor": 44.15,
+          "angle_deg": 93.32
+        },
+        "eccentricity": 0.2226
+      },
+      {
+        "id": "046",
+        "pixel_x": 5761.7303,
+        "pixel_y": 3457.4189,
+        "confidence": 0.9689,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 45.98,
+          "semi_minor": 44.18,
+          "angle_deg": 11.38
+        },
+        "eccentricity": 0.2766
+      },
+      {
+        "id": "047",
+        "pixel_x": 1343.3933,
+        "pixel_y": 3595.4925,
+        "confidence": 0.9682,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 53.78,
+          "semi_minor": 51.16,
+          "angle_deg": 69.6
+        },
+        "eccentricity": 0.308
+      },
+      {
+        "id": "048",
+        "pixel_x": 4785.3216,
+        "pixel_y": 3746.3554,
+        "confidence": 0.9696,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 61.54,
+          "semi_minor": 57.42,
+          "angle_deg": 20.85
+        },
+        "eccentricity": 0.3596
+      },
+      {
+        "id": "049",
+        "pixel_x": 8139.4529,
+        "pixel_y": 3877.4908,
+        "confidence": 0.9653,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 30.59,
+          "semi_minor": 26.04,
+          "angle_deg": 3.57
+        },
+        "eccentricity": 0.5249
+      },
+      {
+        "id": "050",
+        "pixel_x": 7241.3995,
+        "pixel_y": 3906.3469,
+        "confidence": 0.9679,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 30.59,
+          "semi_minor": 26.7,
+          "angle_deg": 7.32
+        },
+        "eccentricity": 0.488
+      },
+      {
+        "id": "051",
+        "pixel_x": 6220.5215,
+        "pixel_y": 3939.4027,
+        "confidence": 0.9687,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 31.38,
+          "semi_minor": 28.41,
+          "angle_deg": 7.35
+        },
+        "eccentricity": 0.4243
+      },
+      {
+        "id": "052",
+        "pixel_x": 5212.4799,
+        "pixel_y": 3972.4144,
+        "confidence": 0.9682,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 32.64,
+          "semi_minor": 30.16,
+          "angle_deg": 10.71
+        },
+        "eccentricity": 0.3823
+      },
+      {
+        "id": "053",
+        "pixel_x": 4066.2663,
+        "pixel_y": 4010.487,
+        "confidence": 0.9683,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 33.51,
+          "semi_minor": 31.81,
+          "angle_deg": 19.15
+        },
+        "eccentricity": 0.3142
+      },
+      {
+        "id": "055",
+        "pixel_x": 1689.4779,
+        "pixel_y": 4084.3463,
+        "confidence": 0.9696,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 36.43,
+          "semi_minor": 35.21,
+          "angle_deg": 57.05
+        },
+        "eccentricity": 0.2563
+      },
+      {
+        "id": "057",
+        "pixel_x": 167.356,
+        "pixel_y": 4154.4153,
+        "confidence": 0.9693,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 39.36,
+          "semi_minor": 36.82,
+          "angle_deg": 73.52
+        },
+        "eccentricity": 0.3528
+      },
+      {
+        "id": "058",
+        "pixel_x": 5644.4578,
+        "pixel_y": 4166.4733,
+        "confidence": 0.9686,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 52.36,
+          "semi_minor": 46.62,
+          "angle_deg": 13.72
+        },
+        "eccentricity": 0.4552
+      },
+      {
+        "id": "059",
+        "pixel_x": 7474.883,
+        "pixel_y": 4269.0847,
+        "confidence": 0.9672,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 29.31,
+          "semi_minor": 28.61,
+          "angle_deg": 87.16
+        },
+        "eccentricity": 0.2172
+      },
+      {
+        "id": "060",
+        "pixel_x": 1344.5117,
+        "pixel_y": 4545.8582,
+        "confidence": 0.9713,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 35.09,
+          "semi_minor": 32.86,
+          "angle_deg": 54.66
+        },
+        "eccentricity": 0.3509
+      },
+      {
+        "id": "061",
+        "pixel_x": 6983.3293,
+        "pixel_y": 4780.3491,
+        "confidence": 0.9683,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 37.7,
+          "semi_minor": 34.53,
+          "angle_deg": 14.86
+        },
+        "eccentricity": 0.4014
+      },
+      {
+        "id": "062",
+        "pixel_x": 4784.0221,
+        "pixel_y": 4914.7069,
+        "confidence": 0.9671,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 40.55,
+          "semi_minor": 36.18,
+          "angle_deg": 21.76
+        },
+        "eccentricity": 0.4518
+      },
+      {
+        "id": "063",
+        "pixel_x": 8147.3536,
+        "pixel_y": 4977.1198,
+        "confidence": 0.9674,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 44.29,
+          "semi_minor": 37.43,
+          "angle_deg": 9.45
+        },
+        "eccentricity": 0.5343
+      },
+      {
+        "id": "064",
+        "pixel_x": 7245.2729,
+        "pixel_y": 5037.4804,
+        "confidence": 0.9674,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 45.39,
+          "semi_minor": 39.11,
+          "angle_deg": 10.53
+        },
+        "eccentricity": 0.5074
+      },
+      {
+        "id": "065",
+        "pixel_x": 1962.4107,
+        "pixel_y": 5059.0641,
+        "confidence": 0.9663,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 44.27,
+          "semi_minor": 40.9,
+          "angle_deg": 46.98
+        },
+        "eccentricity": 0.383
+      },
+      {
+        "id": "066",
+        "pixel_x": 6255.1095,
+        "pixel_y": 5106.8308,
+        "confidence": 0.9672,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 46.74,
+          "semi_minor": 41.23,
+          "angle_deg": 10.37
+        },
+        "eccentricity": 0.471
+      },
+      {
+        "id": "067",
+        "pixel_x": 7472.7824,
+        "pixel_y": 5110.5652,
+        "confidence": 0.97,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 45.27,
+          "semi_minor": 43.2,
+          "angle_deg": 95.03
+        },
+        "eccentricity": 0.2993
+      },
+      {
+        "id": "068",
+        "pixel_x": 5755.3834,
+        "pixel_y": 5121.5966,
+        "confidence": 0.9706,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 46.51,
+          "semi_minor": 43.53,
+          "angle_deg": 31.41
+        },
+        "eccentricity": 0.3522
+      },
+      {
+        "id": "069",
+        "pixel_x": 5260.9846,
+        "pixel_y": 5172.7822,
+        "confidence": 0.9681,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 48.65,
+          "semi_minor": 43.95,
+          "angle_deg": 11.43
+        },
+        "eccentricity": 0.4287
+      },
+      {
+        "id": "070",
+        "pixel_x": 4042.8917,
+        "pixel_y": 5252.4189,
+        "confidence": 0.9689,
+        "source": "manual",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 50.21,
+          "semi_minor": 46.58,
+          "angle_deg": 25.39
+        },
+        "eccentricity": 0.373
+      },
+      {
+        "id": "071",
+        "pixel_x": 1602.3582,
+        "pixel_y": 5403.5257,
+        "confidence": 0.9679,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 55.06,
+          "semi_minor": 51.48,
+          "angle_deg": 51.32
+        },
+        "eccentricity": 0.3547
+      },
+      {
+        "id": "072",
+        "pixel_x": 1339.2759,
+        "pixel_y": 5449.2873,
+        "confidence": 0.969,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 54.75,
+          "semi_minor": 50.4,
+          "angle_deg": 53.44
+        },
+        "eccentricity": 0.3907
+      },
+      {
+        "id": "900",
+        "pixel_x": 1971.9107,
+        "pixel_y": 2529.5833,
+        "confidence": 1.0,
+        "source": "manual",
+        "subpixel_method": "manual"
+      }
+    ]
+  },
+  {
+    "image": "D:/CodeFiles/Python/CloseRangePhotogrammetry/photo\\test.JPG",
+    "image_size": [
+      4272,
+      2848
+    ],
+    "detection_time": "2026-05-08T16:02:00.188430",
+    "targets": [
+      {
+        "id": "001",
+        "pixel_x": 3573.6164,
+        "pixel_y": 25.4325,
+        "confidence": 0.9207,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 33.28,
+          "semi_minor": 23.22,
+          "angle_deg": 82.51
+        },
+        "eccentricity": 0.7165
+      },
+      {
+        "id": "002",
+        "pixel_x": 2876.1987,
+        "pixel_y": 34.3813,
+        "confidence": 0.9241,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 30.31,
+          "semi_minor": 16.91,
+          "angle_deg": 172.97
+        },
+        "eccentricity": 0.8298
+      },
+      {
+        "id": "003",
+        "pixel_x": 1762.6805,
+        "pixel_y": 106.1281,
+        "confidence": 0.9219,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 29.87,
+          "semi_minor": 25.07,
+          "angle_deg": 132.48
+        },
+        "eccentricity": 0.5434
+      },
+      {
+        "id": "004",
+        "pixel_x": 1638.6336,
+        "pixel_y": 172.3264,
+        "confidence": 0.8345,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 57.16,
+          "semi_minor": 47.14,
+          "angle_deg": 150.0
+        },
+        "eccentricity": 0.5655
+      },
+      {
+        "id": "005",
+        "pixel_x": 162.635,
+        "pixel_y": 435.3776,
+        "confidence": 0.845,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 24.6,
+          "semi_minor": 21.5,
+          "angle_deg": 56.36
+        },
+        "eccentricity": 0.4856
+      },
+      {
+        "id": "006",
+        "pixel_x": 20.5392,
+        "pixel_y": 1184.6023,
+        "confidence": 0.833,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 31.28,
+          "semi_minor": 23.78,
+          "angle_deg": 1.15
+        },
+        "eccentricity": 0.6496
+      },
+      {
+        "id": "007",
+        "pixel_x": 1296.3486,
+        "pixel_y": 1204.5252,
+        "confidence": 0.9693,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 22.39,
+          "semi_minor": 21.29,
+          "angle_deg": 179.28
+        },
+        "eccentricity": 0.3095
+      },
+      {
+        "id": "008",
+        "pixel_x": 1447.4261,
+        "pixel_y": 1205.5605,
+        "confidence": 0.9684,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 21.92,
+          "semi_minor": 20.66,
+          "angle_deg": 179.51
+        },
+        "eccentricity": 0.3345
+      },
+      {
+        "id": "009",
+        "pixel_x": 170.4906,
+        "pixel_y": 1235.4277,
+        "confidence": 0.9666,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 20.43,
+          "semi_minor": 19.94,
+          "angle_deg": 122.04
+        },
+        "eccentricity": 0.2174
+      },
+      {
+        "id": "010",
+        "pixel_x": 1455.4681,
+        "pixel_y": 1433.5191,
+        "confidence": 0.965,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 21.71,
+          "semi_minor": 19.54,
+          "angle_deg": 8.01
+        },
+        "eccentricity": 0.4364
+      },
+      {
+        "id": "011",
+        "pixel_x": 1297.3922,
+        "pixel_y": 1457.5501,
+        "confidence": 0.9689,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 22.47,
+          "semi_minor": 21.52,
+          "angle_deg": 21.85
+        },
+        "eccentricity": 0.2875
+      },
+      {
+        "id": "012",
+        "pixel_x": 178.5171,
+        "pixel_y": 1615.3586,
+        "confidence": 0.9659,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 20.8,
+          "semi_minor": 19.54,
+          "angle_deg": 53.77
+        },
+        "eccentricity": 0.3428
+      },
+      {
+        "id": "013",
+        "pixel_x": 16.5944,
+        "pixel_y": 1637.5071,
+        "confidence": 0.9566,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 23.13,
+          "semi_minor": 21.91,
+          "angle_deg": 22.6
+        },
+        "eccentricity": 0.3209
+      },
+      {
+        "id": "014",
+        "pixel_x": 1301.2718,
+        "pixel_y": 1678.4121,
+        "confidence": 0.9717,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 22.08,
+          "semi_minor": 20.34,
+          "angle_deg": 26.38
+        },
+        "eccentricity": 0.3893
+      },
+      {
+        "id": "015",
+        "pixel_x": 1726.3153,
+        "pixel_y": 1696.4845,
+        "confidence": 0.9692,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 22.61,
+          "semi_minor": 20.91,
+          "angle_deg": 18.16
+        },
+        "eccentricity": 0.3805
+      },
+      {
+        "id": "016",
+        "pixel_x": 2861.3205,
+        "pixel_y": 1939.2135,
+        "confidence": 0.916,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 30.34,
+          "semi_minor": 20.71,
+          "angle_deg": 4.63
+        },
+        "eccentricity": 0.7306
+      },
+      {
+        "id": "017",
+        "pixel_x": 2496.1945,
+        "pixel_y": 2017.9065,
+        "confidence": 0.8838,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 35.27,
+          "semi_minor": 24.09,
+          "angle_deg": 168.7
+        },
+        "eccentricity": 0.7304
+      },
+      {
+        "id": "018",
+        "pixel_x": 754.2521,
+        "pixel_y": 2369.5959,
+        "confidence": 0.8765,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 87.28,
+          "semi_minor": 38.66,
+          "angle_deg": 178.55
+        },
+        "eccentricity": 0.8966
+      },
+      {
+        "id": "019",
+        "pixel_x": 202.697,
+        "pixel_y": 2425.4321,
+        "confidence": 0.912,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 51.16,
+          "semi_minor": 36.14,
+          "angle_deg": 13.36
+        },
+        "eccentricity": 0.7076
+      },
+      {
+        "id": "020",
+        "pixel_x": 38.0412,
+        "pixel_y": 2550.5144,
+        "confidence": 0.9574,
+        "source": "auto",
+        "subpixel_method": "centroid",
+        "ellipse": {
+          "semi_major": 22.63,
+          "semi_minor": 20.33,
+          "angle_deg": 66.99
+        },
+        "eccentricity": 0.4393
+      }
+    ]
+  }
+]
