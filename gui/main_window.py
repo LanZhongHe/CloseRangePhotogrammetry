@@ -34,6 +34,12 @@ from src.subpixel import localize_target, centroid_refine
 from src.id_recognition import assign_sequential_ids
 from src.data_model import DetectionResult, TargetPoint
 from src.io_utils import save_results
+from src.coord_io import load_control_field
+from src.matching import MatchedPoint
+from src.camera_model import CameraIntrinsics, SolveConfig
+from gui.matching_dialog import MatchingDialog
+from gui.resection_panel import ResectionPanel
+from gui.dlt_panel import DLTPanel
 
 
 SUPPORTED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp"}
@@ -242,6 +248,9 @@ class MainWindow(QMainWindow):
         self._selected_index: int = -1   # index into current result.targets
         self._worker: Optional[DetectionWorker] = None
         self._adding_mode: bool = False  # True = waiting for user click to add
+        self._control_field: dict[str, tuple[float, float, float]] = {}
+        self._matched_points: list[MatchedPoint] = []
+        self._current_image: np.ndarray | None = None  # cached for matching preview
 
         self._init_ui()
         self._init_menu()
@@ -387,6 +396,24 @@ class MainWindow(QMainWindow):
         act_detect_cur = QAction("Detect Current Image", self)
         act_detect_cur.triggered.connect(self._detect_current)
         det_menu.addAction(act_detect_cur)
+
+        # Photogrammetry menu
+        photo_menu = menubar.addMenu("摄影测量")
+        act_load_ctrl = QAction("加载控制场坐标...", self)
+        act_load_ctrl.triggered.connect(self._load_control_field)
+        photo_menu.addAction(act_load_ctrl)
+
+        act_match = QAction("像点匹配...", self)
+        act_match.triggered.connect(self._open_matching_dialog)
+        photo_menu.addAction(act_match)
+
+        act_resection = QAction("空间后方交会...", self)
+        act_resection.triggered.connect(self._open_resection_panel)
+        photo_menu.addAction(act_resection)
+
+        act_dlt = QAction("直接线性变换...", self)
+        act_dlt.triggered.connect(self._open_dlt_panel)
+        photo_menu.addAction(act_dlt)
 
     # --- Properties ---
 
@@ -576,6 +603,7 @@ class MainWindow(QMainWindow):
         if image is None:
             return
 
+        self._current_image = image
         h, w = image.shape[:2]
         rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         qimg = QImage(rgb.data, w, h, rgb.strides[0], QImage.Format_RGB888)
@@ -583,6 +611,98 @@ class MainWindow(QMainWindow):
         self.viewer.set_image(pixmap)
 
         self._refresh_display()
+
+    # --- Photogrammetry ---
+
+    def _load_control_field(self):
+        """Load control field coordinates from a text file."""
+        path, _ = QFileDialog.getOpenFileName(
+            self, "选择控制场坐标文件", "docs/",
+            "Text Files (*.txt);;All Files (*)"
+        )
+        if not path:
+            return
+        try:
+            self._control_field = load_control_field(path)
+            self.status.showMessage(
+                f"已加载 {len(self._control_field)} 个控制场坐标点"
+            )
+        except Exception as e:
+            QMessageBox.warning(self, "加载失败", str(e))
+
+    def _get_intrinsics(self) -> CameraIntrinsics:
+        """Get default camera intrinsics from current image dimensions."""
+        result = self._current_result()
+        if result:
+            return CameraIntrinsics(
+                img_width=result.image_width,
+                img_height=result.image_height,
+            )
+        return CameraIntrinsics()
+
+    def _open_matching_dialog(self):
+        """Open the matching dialog to pair detected points with control field."""
+        result = self._current_result()
+        if not result or not result.targets:
+            QMessageBox.information(self, "无数据", "请先检测当前影像的控制点。")
+            return
+        if not self._control_field:
+            QMessageBox.information(self, "无控制场", "请先加载控制场坐标文件。")
+            return
+
+        intrinsics = self._get_intrinsics()
+        solve_config = SolveConfig()  # default config for min_points calculation
+
+        dlg = MatchingDialog(
+            detected_points=result.targets,
+            control_field=self._control_field,
+            image_path=self._current_path() or "",
+            image=self._current_image,
+            intrinsics=intrinsics,
+            solve_config=solve_config,
+            parent=self,
+        )
+        if dlg.exec_() == QDialog.Accepted:
+            self._matched_points = dlg.get_matched_points()
+            self.status.showMessage(
+                f"完成匹配：{len(self._matched_points)} 对像点-物方坐标"
+            )
+
+    def _open_resection_panel(self):
+        """Open the space resection panel in a dialog."""
+        if not self._matched_points:
+            QMessageBox.information(
+                self, "未匹配", "请先通过「像点匹配」建立像点-物方坐标对应关系。"
+            )
+            return
+
+        from PyQt5.QtWidgets import QDialog, QVBoxLayout
+        dlg = QDialog(self)
+        dlg.setWindowTitle("空间后方交会")
+        dlg.setMinimumSize(700, 800)
+        layout = QVBoxLayout(dlg)
+        panel = ResectionPanel(dlg)
+        panel.set_matched_points(self._matched_points)
+        layout.addWidget(panel)
+        dlg.exec_()
+
+    def _open_dlt_panel(self):
+        """Open the DLT panel in a dialog."""
+        if not self._matched_points:
+            QMessageBox.information(
+                self, "未匹配", "请先通过「像点匹配」建立像点-物方坐标对应关系。"
+            )
+            return
+
+        from PyQt5.QtWidgets import QDialog, QVBoxLayout
+        dlg = QDialog(self)
+        dlg.setWindowTitle("直接线性变换 (DLT)")
+        dlg.setMinimumSize(700, 800)
+        layout = QVBoxLayout(dlg)
+        panel = DLTPanel(dlg)
+        panel.set_matched_points(self._matched_points)
+        layout.addWidget(panel)
+        dlg.exec_()
 
     # --- File management ---
 
