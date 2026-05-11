@@ -18,6 +18,7 @@ class MatchedPoint:
     obj_y: float = 0.0
     obj_z: float = 0.0
     is_manual: bool = False
+    is_check: bool = False     # True = check point (not used for solving)
 
     def to_dict(self) -> dict:
         return {
@@ -31,13 +32,15 @@ class MatchedPoint:
             "obj_y": self.obj_y,
             "obj_z": self.obj_z,
             "is_manual": self.is_manual,
+            "is_check": self.is_check,
         }
 
     @classmethod
     def from_dict(cls, d: dict) -> "MatchedPoint":
-        # Accept old format without detected_id
+        # Accept old format without detected_id or is_check
         d = dict(d)
         d.setdefault("detected_id", "")
+        d.setdefault("is_check", False)
         return cls(**d)
 
 

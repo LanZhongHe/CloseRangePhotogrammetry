@@ -45,10 +45,6 @@ class DistortionCoefficients:
     K3: float = 0.0
     P1: float = 0.0
     P2: float = 0.0
-    A1: float = 0.0
-    A2: float = 0.0
-    B1: float = 0.0
-    B2: float = 0.0
 
 
 @dataclass
@@ -62,10 +58,6 @@ class SolveConfig:
     solve_k3: bool = False
     solve_p1: bool = False
     solve_p2: bool = False
-    solve_a1: bool = False
-    solve_a2: bool = False
-    solve_b1: bool = False
-    solve_b2: bool = False
 
     @property
     def num_unknowns(self) -> int:
@@ -74,8 +66,6 @@ class SolveConfig:
             self.solve_f, self.solve_x0, self.solve_y0,
             self.solve_k1, self.solve_k2, self.solve_k3,
             self.solve_p1, self.solve_p2,
-            self.solve_a1, self.solve_a2,
-            self.solve_b1, self.solve_b2,
         ])
 
     @property
@@ -92,10 +82,6 @@ class SolveConfig:
         if self.solve_k3: names.append("K3")
         if self.solve_p1: names.append("P1")
         if self.solve_p2: names.append("P2")
-        if self.solve_a1: names.append("A1")
-        if self.solve_a2: names.append("A2")
-        if self.solve_b1: names.append("B1")
-        if self.solve_b2: names.append("B2")
         return names
 
     @property
@@ -169,11 +155,10 @@ def compute_distortion(
     x0: float, y0: float,
     K1: float, K2: float, K3: float,
     P1: float, P2: float,
-    A1: float, A2: float, B1: float, B2: float,
 ) -> tuple[float, float]:
     """Compute total distortion corrections (delta_x, delta_y) in mm.
 
-    Uses the Brown distortion model (radial + decentering + thin prism).
+    Uses the Brown distortion model (radial + decentering).
     """
     dx = x - x0
     dy = y - y0
@@ -190,11 +175,7 @@ def compute_distortion(
     dd_x = P1 * (r2 + 2 * dx * dx) + 2 * P2 * dx * dy
     dd_y = P2 * (r2 + 2 * dy * dy) + 2 * P1 * dx * dy
 
-    # Thin prism distortion
-    dp_x = A1 * r2 + A2 * r4
-    dp_y = B1 * r2 + B2 * r4
-
-    return dr_x + dd_x + dp_x, dr_y + dd_y + dp_y
+    return dr_x + dd_x, dr_y + dd_y
 
 
 def distortion_derivatives(
@@ -229,16 +210,6 @@ def distortion_derivatives(
         result["P1"] = (r2 + 2 * dx * dx, 2 * dx * dy)
     if solve_config.solve_p2:
         result["P2"] = (2 * dx * dy, r2 + 2 * dy * dy)
-
-    # Thin prism
-    if solve_config.solve_a1:
-        result["A1"] = (r2, 0.0)
-    if solve_config.solve_a2:
-        result["A2"] = (r4, 0.0)
-    if solve_config.solve_b1:
-        result["B1"] = (0.0, r2)
-    if solve_config.solve_b2:
-        result["B2"] = (0.0, r4)
 
     return result
 

@@ -107,7 +107,7 @@ class ResectionPanel(QWidget):
 
         preset_row = QHBoxLayout()
         self._preset_combo = QComboBox()
-        self._preset_combo.addItems(["仅K1", "K1+K2", "径向+偏心", "径向+偏心+薄棱镜", "全部"])
+        self._preset_combo.addItems(["仅K1", "K1+K2", "径向+偏心", "全部"])
         self._preset_combo.currentTextChanged.connect(self._apply_preset)
         preset_row.addWidget(QLabel("预设:"))
         preset_row.addWidget(self._preset_combo)
@@ -120,14 +120,8 @@ class ResectionPanel(QWidget):
         self._solve_k3 = QCheckBox("K3")
         self._solve_p1 = QCheckBox("P1")
         self._solve_p2 = QCheckBox("P2")
-        self._solve_a1 = QCheckBox("A1")
-        self._solve_a2 = QCheckBox("A2")
-        self._solve_b1 = QCheckBox("B1")
-        self._solve_b2 = QCheckBox("B2")
         for cb in [self._solve_k1, self._solve_k2, self._solve_k3,
-                   self._solve_p1, self._solve_p2,
-                   self._solve_a1, self._solve_a2,
-                   self._solve_b1, self._solve_b2]:
+                   self._solve_p1, self._solve_p2]:
             check_row.addWidget(cb)
             cb.toggled.connect(self._update_info)
         dist_layout.addLayout(check_row)
@@ -194,19 +188,16 @@ class ResectionPanel(QWidget):
 
     def _apply_preset(self, text):
         presets = {
-            "仅K1": (True, False, False, False, False, False, False, False, False),
-            "K1+K2": (True, True, False, False, False, False, False, False, False),
-            "径向+偏心": (True, True, False, True, True, False, False, False, False),
-            "径向+偏心+薄棱镜": (True, True, False, True, True, True, True, True, True),
-            "全部": (True, True, True, True, True, True, True, True, True),
+            "仅K1": (True, False, False, False, False),
+            "K1+K2": (True, True, False, False, False),
+            "径向+偏心": (True, True, False, True, True),
+            "全部": (True, True, True, True, True),
         }
         vals = presets.get(text)
         if vals:
             for cb, v in zip(
                 [self._solve_k1, self._solve_k2, self._solve_k3,
-                 self._solve_p1, self._solve_p2,
-                 self._solve_a1, self._solve_a2,
-                 self._solve_b1, self._solve_b2],
+                 self._solve_p1, self._solve_p2],
                 vals
             ):
                 cb.setChecked(v)
@@ -239,10 +230,6 @@ class ResectionPanel(QWidget):
             solve_k3=self._solve_k3.isChecked(),
             solve_p1=self._solve_p1.isChecked(),
             solve_p2=self._solve_p2.isChecked(),
-            solve_a1=self._solve_a1.isChecked(),
-            solve_a2=self._solve_a2.isChecked(),
-            solve_b1=self._solve_b1.isChecked(),
-            solve_b2=self._solve_b2.isChecked(),
         )
 
     def _get_intrinsics(self) -> CameraIntrinsics:
@@ -258,11 +245,14 @@ class ResectionPanel(QWidget):
 
     def _update_info(self):
         config = self._get_solve_config()
-        n = len(self._matched_points)
-        self._info_label.setText(
-            f"已匹配 {n} 点 / 最少需要 {config.min_points} / "
-            f"未知数 {config.num_unknowns} / 冗余度 {n * 2 - config.num_unknowns}"
+        n_ctrl = sum(1 for p in self._matched_points if not p.is_check)
+        n_check = sum(1 for p in self._matched_points if p.is_check)
+        text = (
+            f"控制点 {n_ctrl} / 检查点 {n_check} / "
+            f"最少需要 {config.min_points} / "
+            f"未知数 {config.num_unknowns} / 冗余度 {n_ctrl * 2 - config.num_unknowns}"
         )
+        self._info_label.setText(text)
 
     def _run(self):
         if not self._matched_points:
@@ -319,8 +309,7 @@ class ResectionPanel(QWidget):
         lines.append("--- 畸变系数 ---")
         d = r.distortion
         for name, val in [("K1", d.K1), ("K2", d.K2), ("K3", d.K3),
-                          ("P1", d.P1), ("P2", d.P2),
-                          ("A1", d.A1), ("A2", d.A2), ("B1", d.B1), ("B2", d.B2)]:
+                          ("P1", d.P1), ("P2", d.P2)]:
             if val != 0.0:
                 lines.append(f"  {name} = {val:.10e}")
         lines.append("")
@@ -331,12 +320,23 @@ class ResectionPanel(QWidget):
                 lines.append(f"  σ({name}) = {std:.6f}")
             lines.append("")
 
+        # Check point accuracy
+        if r.check_point_ids:
+            lines.append("--- 检查点精度 ---")
+            lines.append(f"  检查点数量: {len(r.check_point_ids)}")
+            lines.append(f"  检查点 σ₀: {r.check_point_sigma0:.6f} mm  ({r.check_point_sigma0 / r.intrinsics.pixel_size:.2f} 像素)")
+            lines.append(f"{'点号':>6s}  {'vx (mm)':>12s}  {'vy (mm)':>12s}")
+            for cid, (vx, vy) in zip(r.check_point_ids, r.check_point_residuals):
+                lines.append(f"{cid:>6s}  {vx:12.6f}  {vy:12.6f}")
+            lines.append("")
+
         self._result_text.setPlainText("\n".join(lines))
 
-        # Fill residuals table
+        # Fill residuals table (control points only)
+        control_pts = [p for p in self._matched_points if not p.is_check]
         self._residual_table.setRowCount(len(r.residuals))
         for i, (vx, vy) in enumerate(r.residuals):
-            cid = self._matched_points[i].control_id if i < len(self._matched_points) else ""
+            cid = control_pts[i].control_id if i < len(control_pts) else ""
             self._residual_table.setItem(i, 0, QTableWidgetItem(cid))
             self._residual_table.setItem(i, 1, QTableWidgetItem(f"{vx:.6f}"))
             self._residual_table.setItem(i, 2, QTableWidgetItem(f"{vy:.6f}"))
@@ -354,6 +354,7 @@ class ResectionPanel(QWidget):
 
         import json
         r = self._result
+        control_pts = [p for p in self._matched_points if not p.is_check]
         data = {
             "converged": r.converged,
             "num_iterations": r.num_iterations,
@@ -373,14 +374,20 @@ class ResectionPanel(QWidget):
             "distortion": {
                 "K1": r.distortion.K1, "K2": r.distortion.K2, "K3": r.distortion.K3,
                 "P1": r.distortion.P1, "P2": r.distortion.P2,
-                "A1": r.distortion.A1, "A2": r.distortion.A2,
-                "B1": r.distortion.B1, "B2": r.distortion.B2,
             },
             "param_std": r.param_std,
             "residuals": [
-                {"control_id": self._matched_points[i].control_id, "vx": vx, "vy": vy}
+                {"control_id": control_pts[i].control_id, "vx": vx, "vy": vy}
                 for i, (vx, vy) in enumerate(r.residuals)
             ],
+            "check_points": {
+                "sigma0_mm": r.check_point_sigma0,
+                "sigma0_px": r.check_point_sigma0 / r.intrinsics.pixel_size if r.intrinsics.pixel_size else 0,
+                "residuals": [
+                    {"control_id": cid, "vx": vx, "vy": vy}
+                    for cid, (vx, vy) in zip(r.check_point_ids, r.check_point_residuals)
+                ],
+            },
         }
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)

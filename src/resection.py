@@ -23,6 +23,9 @@ class ResectionResult:
     param_std: dict[str, float]
     num_iterations: int
     converged: bool
+    check_point_ids: list[str] = field(default_factory=list)
+    check_point_residuals: list[tuple[float, float]] = field(default_factory=list)
+    check_point_sigma0: float = 0.0
 
 
 def _build_param_vector(
@@ -49,14 +52,6 @@ def _build_param_vector(
         params.append(dist.P1)
     if config.solve_p2:
         params.append(dist.P2)
-    if config.solve_a1:
-        params.append(dist.A1)
-    if config.solve_a2:
-        params.append(dist.A2)
-    if config.solve_b1:
-        params.append(dist.B1)
-    if config.solve_b2:
-        params.append(dist.B2)
     return np.array(params)
 
 
@@ -80,7 +75,6 @@ def _unpack_param_vector(
     dist_out = DistortionCoefficients(
         K1=dist.K1, K2=dist.K2, K3=dist.K3,
         P1=dist.P1, P2=dist.P2,
-        A1=dist.A1, A2=dist.A2, B1=dist.B1, B2=dist.B2,
     )
     if config.solve_f:
         intr_out.f = params[idx]; idx += 1
@@ -98,14 +92,6 @@ def _unpack_param_vector(
         dist_out.P1 = params[idx]; idx += 1
     if config.solve_p2:
         dist_out.P2 = params[idx]; idx += 1
-    if config.solve_a1:
-        dist_out.A1 = params[idx]; idx += 1
-    if config.solve_a2:
-        dist_out.A2 = params[idx]; idx += 1
-    if config.solve_b1:
-        dist_out.B1 = params[idx]; idx += 1
-    if config.solve_b2:
-        dist_out.B2 = params[idx]; idx += 1
     return ext, intr_out, dist_out
 
 
@@ -195,7 +181,10 @@ def space_resection(
     Returns:
         ResectionResult with all outputs and accuracy assessment
     """
-    n = len(matched_points)
+    # Separate control points and check points
+    control_points = [p for p in matched_points if not p.is_check]
+    check_points = [p for p in matched_points if p.is_check]
+    n = len(control_points)
     u = solve_config.num_unknowns
     if n < solve_config.min_points:
         raise ValueError(
@@ -204,7 +193,7 @@ def space_resection(
 
     # Initial values
     if initial_exterior is None:
-        ext = _estimate_initial_exterior(matched_points)
+        ext = _estimate_initial_exterior(control_points)
     else:
         ext = ExteriorOrientation(
             Xs=initial_exterior.Xs, Ys=initial_exterior.Ys, Zs=initial_exterior.Zs,
@@ -216,7 +205,7 @@ def space_resection(
         eps = 1e-4
         if abs(ext.omega) < eps and abs(ext.phi) < eps and abs(ext.kappa) < eps:
             ext.omega, ext.phi, ext.kappa = _estimate_initial_rotation(
-                ext.Xs, ext.Ys, ext.Zs, matched_points,
+                ext.Xs, ext.Ys, ext.Zs, control_points,
             )
     dist = DistortionCoefficients()
     f = intrinsics.f
@@ -239,7 +228,7 @@ def space_resection(
         B = np.zeros((2 * n, u))
         L = np.zeros(2 * n)
 
-        for i, pt in enumerate(matched_points):
+        for i, pt in enumerate(control_points):
             X, Y, Z = pt.obj_x, pt.obj_y, pt.obj_z
             xi, yi = pt.image_x_mm, pt.image_y_mm
 
@@ -264,12 +253,12 @@ def space_resection(
                 xi, yi, x0, y0,
                 dist.K1, dist.K2, dist.K3,
                 dist.P1, dist.P2,
-                dist.A1, dist.A2, dist.B1, dist.B2,
             )
 
-            # Residuals: Fx = xi - x0 + dx + f * Xbar / Zbar = 0 when correct
-            Fx = xi - x0 + dx + f * Xbar / Zbar
-            Fy = yi - y0 + dy + f * Ybar / Zbar
+            # Residuals: Fx = xi - x0 - dx + f * Xbar / Zbar = 0 when correct
+            # (x_undistorted = xi - dx, and x_undistorted - x0 = -f * Xbar/Zbar)
+            Fx = xi - x0 - dx + f * Xbar / Zbar
+            Fy = yi - y0 - dy + f * Ybar / Zbar
             L[2 * i] = Fx
             L[2 * i + 1] = Fy
 
@@ -278,7 +267,7 @@ def space_resection(
             Zbar2 = Zbar * Zbar
 
             # Jacobian for Xs, Ys, Zs:
-            # F = xi - x0 + dx + f * Xbar/Zbar
+            # F = xi - x0 - dx + f * Xbar/Zbar
             # dXbar/dXs = -a[0], dZbar/dXs = -a[6]
             # dF/dXs = f * (-a[0]*Zbar + a[6]*Xbar) / Zbar^2
             # B = -dF/dXs = f/Zbar^2 * (a[0]*Zbar - a[6]*Xbar)
@@ -325,13 +314,13 @@ def space_resection(
                 col += 1
 
             # Distortion parameter derivatives
-            # F = xi - x0 + dx + f * Xbar/Zbar, so dF/d(dist_param) = d(dx)/d(dist_param) = ddx
-            # B = -dF/d(dist_param) = -ddx (distortion is in mm, applied directly to image coords)
+            # F = xi - x0 - dx + f * Xbar/Zbar, so dF/d(dist_param) = -d(dx)/d(dist_param) = -ddx
+            # B = -dF/d(dist_param) = +ddx
             dist_derivs = distortion_derivatives(xi, yi, x0, y0, dist.K1, dist.K2, dist.K3, solve_config)
             for pname in solve_config.distortion_param_names:
                 ddx, ddy = dist_derivs[pname]
-                B[2*i, col] = -ddx
-                B[2*i+1, col] = -ddy
+                B[2*i, col] = ddx
+                B[2*i+1, col] = ddy
                 col += 1
 
         # Current cost
@@ -367,7 +356,7 @@ def space_resection(
             R_t = rotation_matrix(ext_trial.omega, ext_trial.phi, ext_trial.kappa)
             a_t = R_t.flatten()
             cost_trial = 0.0
-            for i_pt, pt in enumerate(matched_points):
+            for i_pt, pt in enumerate(control_points):
                 X, Y, Z = pt.obj_x, pt.obj_y, pt.obj_z
                 xi, yi = pt.image_x_mm, pt.image_y_mm
                 dX = X - ext_trial.Xs; dY = Y - ext_trial.Ys; dZ = Z - ext_trial.Zs
@@ -378,10 +367,9 @@ def space_resection(
                     xi, yi, intr_trial.x0, intr_trial.y0,
                     dist_trial.K1, dist_trial.K2, dist_trial.K3,
                     dist_trial.P1, dist_trial.P2,
-                    dist_trial.A1, dist_trial.A2, dist_trial.B1, dist_trial.B2,
                 )
-                Fx = xi - intr_trial.x0 + dx_t + intr_trial.f * Xb / Zb
-                Fy = yi - intr_trial.y0 + dy_t + intr_trial.f * Yb / Zb
+                Fx = xi - intr_trial.x0 - dx_t + intr_trial.f * Xb / Zb
+                Fy = yi - intr_trial.y0 - dy_t + intr_trial.f * Yb / Zb
                 cost_trial += Fx**2 + Fy**2
 
             if cost_trial < cost:
@@ -411,7 +399,7 @@ def space_resection(
     residuals = []
     v = np.zeros(2 * n)
 
-    for i, pt in enumerate(matched_points):
+    for i, pt in enumerate(control_points):
         X, Y, Z = pt.obj_x, pt.obj_y, pt.obj_z
         xi, yi = pt.image_x_mm, pt.image_y_mm
 
@@ -427,11 +415,10 @@ def space_resection(
             xi, yi, x0, y0,
             dist.K1, dist.K2, dist.K3,
             dist.P1, dist.P2,
-            dist.A1, dist.A2, dist.B1, dist.B2,
         )
 
-        vx = xi - x0 + dx + f * Xbar / Zbar
-        vy = yi - y0 + dy + f * Ybar / Zbar
+        vx = xi - x0 - dx + f * Xbar / Zbar
+        vy = yi - y0 - dy + f * Ybar / Zbar
         v[2 * i] = vx
         v[2 * i + 1] = vy
         residuals.append((vx, vy))
@@ -439,7 +426,7 @@ def space_resection(
     # Rebuild B for covariance
     B = np.zeros((2 * n, u))
     dR_do, dR_dp, dR_dk = rotation_matrix_derivatives(ext.omega, ext.phi, ext.kappa)
-    for i, pt in enumerate(matched_points):
+    for i, pt in enumerate(control_points):
         X, Y, Z = pt.obj_x, pt.obj_y, pt.obj_z
         xi, yi = pt.image_x_mm, pt.image_y_mm
         dX = X - ext.Xs; dY = Y - ext.Ys; dZ = Z - ext.Zs
@@ -482,7 +469,7 @@ def space_resection(
         dist_derivs = distortion_derivatives(xi, yi, x0, y0, dist.K1, dist.K2, dist.K3, solve_config)
         for pname in solve_config.distortion_param_names:
             ddx, ddy = dist_derivs[pname]
-            B[2*i,col]=-ddx; B[2*i+1,col]=-ddy; col+=1
+            B[2*i,col]=ddx; B[2*i+1,col]=ddy; col+=1
 
     BtB = B.T @ B
     dof = 2 * n - u
@@ -513,6 +500,28 @@ def space_resection(
         img_width=intrinsics.img_width, img_height=intrinsics.img_height,
     )
 
+    # Compute check point residuals
+    check_ids = []
+    check_residuals = []
+    check_v = []
+    for pt in check_points:
+        X, Y, Z = pt.obj_x, pt.obj_y, pt.obj_z
+        xi, yi = pt.image_x_mm, pt.image_y_mm
+        dX = X - ext.Xs; dY = Y - ext.Ys; dZ = Z - ext.Zs
+        Xbar = a[0]*dX + a[1]*dY + a[2]*dZ
+        Ybar = a[3]*dX + a[4]*dY + a[5]*dZ
+        Zbar = a[6]*dX + a[7]*dY + a[8]*dZ
+        dx, dy = compute_distortion(xi, yi, x0, y0, dist.K1, dist.K2, dist.K3, dist.P1, dist.P2)
+        vx = xi - x0 - dx + f * Xbar / Zbar
+        vy = yi - y0 - dy + f * Ybar / Zbar
+        check_ids.append(pt.control_id)
+        check_residuals.append((vx, vy))
+        check_v.extend([vx, vy])
+
+    check_sigma0 = 0.0
+    if check_v:
+        check_sigma0 = np.sqrt(np.mean(np.array(check_v)**2))
+
     return ResectionResult(
         exterior=ext,
         intrinsics=intrinsics_out,
@@ -523,4 +532,7 @@ def space_resection(
         param_std=param_std,
         num_iterations=num_iter,
         converged=converged,
+        check_point_ids=check_ids,
+        check_point_residuals=check_residuals,
+        check_point_sigma0=check_sigma0,
     )

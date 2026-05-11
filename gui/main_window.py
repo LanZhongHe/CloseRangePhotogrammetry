@@ -40,6 +40,7 @@ from src.camera_model import CameraIntrinsics, SolveConfig
 from gui.matching_dialog import MatchingDialog
 from gui.resection_panel import ResectionPanel
 from gui.dlt_panel import DLTPanel
+from gui.forward_intersection_panel import ForwardIntersectionPanel
 from gui.detection_params_dialog import DetectionParamsDialog
 
 
@@ -252,11 +253,12 @@ class MainWindow(QMainWindow):
         self._control_field: dict[str, tuple[float, float, float]] = {}
         self._matched_points: dict[str, list[MatchedPoint]] = {}  # image_path -> points
         self._matches_state: dict[str, dict[int, str]] = {}  # image_path -> {row: control_id}
+        self._checks_state: dict[str, dict[int, bool]] = {}  # image_path -> {row: is_check}
         self._current_image: np.ndarray | None = None  # cached for matching preview
         self._det_target_size = 100
         self._det_circularity = 0.65
         self._det_area_tol = 0.5
-        self._resection_panel: ResectionPanel | None = None  # stored for intrinsics access
+        self._camera_intrinsics: CameraIntrinsics | None = None  # from resection result
 
         self._init_ui()
         self._init_menu()
@@ -410,6 +412,10 @@ class MainWindow(QMainWindow):
         act_dlt.triggered.connect(self._open_dlt_panel)
         photo_menu.addAction(act_dlt)
 
+        act_fi = QAction("前方交会...", self)
+        act_fi.triggered.connect(self._open_forward_intersection_panel)
+        photo_menu.addAction(act_fi)
+
     # --- Properties ---
 
     def _get_params(self) -> DetectionParams:
@@ -517,11 +523,16 @@ class MainWindow(QMainWindow):
         if result is None:
             return
 
-        # Get ID
+        # Show temporary marker at click position immediately
+        self.viewer.add_marker(sx, sy, "?", selected=True)
+
+        # Get ID (user can now see where the point is)
         id_str, ok = QInputDialog.getText(
             self, "新点号", "输入点号:", text="001"
         )
         if not ok:
+            # User cancelled — remove the temporary marker
+            self._refresh_display()
             return
         id_str = id_str.strip().zfill(3)
 
@@ -640,11 +651,9 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "加载失败", str(e))
 
     def _get_intrinsics(self) -> CameraIntrinsics:
-        """Get camera intrinsics from resection panel if available, else from image dimensions."""
-        # If resection panel is open, use its camera parameters
-        if self._resection_panel is not None:
-            return self._resection_panel._get_intrinsics()
-        # Otherwise, use default parameters with image dimensions
+        """Get camera intrinsics (from resection result or default from image)."""
+        if self._camera_intrinsics is not None:
+            return self._camera_intrinsics
         result = self._current_result()
         if result:
             return CameraIntrinsics(
@@ -669,6 +678,7 @@ class MainWindow(QMainWindow):
 
         # Restore previous matching state for this image
         prev = self._matches_state.get(path, {})
+        prev_checks = self._checks_state.get(path, {})
 
         dlg = MatchingDialog(
             detected_points=result.targets,
@@ -678,13 +688,17 @@ class MainWindow(QMainWindow):
             intrinsics=intrinsics,
             solve_config=solve_config,
             previous_matches=prev,
+            previous_checks=prev_checks,
             parent=self,
         )
         if dlg.exec_() == QDialog.Accepted:
             self._matched_points[path] = dlg.get_matched_points()
             self._matches_state[path] = dlg.get_matches_dict()
+            self._checks_state[path] = dlg.get_checks_dict()
+            n_ctrl = sum(1 for p in self._matched_points[path] if not p.is_check)
+            n_check = sum(1 for p in self._matched_points[path] if p.is_check)
             self.status.showMessage(
-                f"完成匹配：{len(self._matched_points[path])} 对像点-物方坐标"
+                f"完成匹配：{n_ctrl} 控制点 + {n_check} 检查点"
             )
 
     def _open_resection_panel(self):
@@ -705,9 +719,11 @@ class MainWindow(QMainWindow):
         panel = ResectionPanel(dlg)
         panel.set_matched_points(points)
         layout.addWidget(panel)
-        self._resection_panel = panel  # store for intrinsics access
         dlg.exec_()
-        self._resection_panel = None  # clear after dialog closes
+
+        # Save solved intrinsics back to main window
+        if panel._result is not None:
+            self._camera_intrinsics = panel._result.intrinsics
 
     def _open_dlt_panel(self):
         """Open the DLT panel in a dialog."""
@@ -726,6 +742,21 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(dlg)
         panel = DLTPanel(dlg)
         panel.set_matched_points(points)
+        layout.addWidget(panel)
+        dlg.exec_()
+
+    def _open_forward_intersection_panel(self):
+        """Open the forward intersection panel in a dialog."""
+        from PyQt5.QtWidgets import QDialog, QVBoxLayout
+        dlg = QDialog(self)
+        dlg.setWindowTitle("前方交会")
+        dlg.setMinimumSize(800, 900)
+        layout = QVBoxLayout(dlg)
+        panel = ForwardIntersectionPanel(
+            image_paths=self._image_paths,
+            intrinsics=self._camera_intrinsics,
+            parent=dlg,
+        )
         layout.addWidget(panel)
         dlg.exec_()
 

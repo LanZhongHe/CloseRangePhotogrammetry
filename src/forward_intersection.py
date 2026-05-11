@@ -1,0 +1,251 @@
+"""Forward intersection to compute 3D object coordinates from image pairs."""
+
+from dataclasses import dataclass
+import numpy as np
+
+from .camera_model import CameraIntrinsics, ExteriorOrientation, rotation_matrix
+
+
+@dataclass
+class TiePoint:
+    """A pair of corresponding image coordinates in two images."""
+    point_id: str
+    image1_x: float  # mm
+    image1_y: float  # mm
+    image2_x: float  # mm
+    image2_y: float  # mm
+
+
+@dataclass
+class ForwardIntersectionResult:
+    """Results from forward intersection."""
+    point_ids: list[str]
+    coordinates: np.ndarray          # (n, 3) — X, Y, Z
+    residuals: list[tuple[float, float, float, float]]  # (vx1, vy1, vx2, vy2) per point
+    sigma0: float                    # unit weight std dev (mm)
+    intersection_angles: list[float] # degrees, per point
+
+
+# ---- DLT-based forward intersection ----
+
+def forward_intersection_dlt(
+    tie_points: list[TiePoint],
+    L1: np.ndarray,
+    L2: np.ndarray,
+) -> ForwardIntersectionResult:
+    """Compute 3D coordinates from two-image DLT parameters.
+
+    For each tie point, the DLT equations from two images give 4 equations
+    for 3 unknowns (X, Y, Z), solved by least squares.
+
+    Args:
+        tie_points: corresponding image points in two images
+        L1: 11 DLT parameters for image 1
+        L2: 11 DLT parameters for image 2
+
+    Returns:
+        ForwardIntersectionResult with coordinates and accuracy
+    """
+    n = len(tie_points)
+    if n < 1:
+        raise ValueError("Need at least 1 tie point")
+
+    point_ids = []
+    coordinates = np.zeros((n, 3))
+    residuals = []
+    angles = []
+
+    for i, tp in enumerate(tie_points):
+        point_ids.append(tp.point_id)
+
+        # Build 4x3 system: A @ [X,Y,Z]^T = b
+        # Image 1: (L1-x*L9)*X + (L2-x*L10)*Y + (L3-x*L11)*Z = x - L4
+        x1, y1 = tp.image1_x, tp.image1_y
+        x2, y2 = tp.image2_x, tp.image2_y
+
+        A = np.array([
+            [L1[0] - x1*L1[8],  L1[1] - x1*L1[9],  L1[2] - x1*L1[10]],
+            [L1[4] - y1*L1[8],  L1[5] - y1*L1[9],  L1[6] - y1*L1[10]],
+            [L2[0] - x2*L2[8],  L2[1] - x2*L2[9],  L2[2] - x2*L2[10]],
+            [L2[4] - y2*L2[8],  L2[5] - y2*L2[9],  L2[6] - y2*L2[10]],
+        ])
+        b = np.array([x1 - L1[3], y1 - L1[7], x2 - L2[3], y2 - L2[7]])
+
+        # Least squares: (A^T A) X = A^T b
+        AtA = A.T @ A
+        Atb = A.T @ b
+        try:
+            xyz = np.linalg.solve(AtA, Atb)
+        except np.linalg.LinAlgError:
+            xyz = np.array([0.0, 0.0, 0.0])
+
+        coordinates[i] = xyz
+
+        # Residuals
+        v = A @ xyz - b
+        residuals.append((v[0], v[1], v[2], v[3]))
+
+        # Intersection angle: angle between the two rays
+        # Ray 1 direction: from camera 1 center through image point 1
+        # Ray 2 direction: from camera 2 center through image point 2
+        # Approximate using the DLT geometry
+        angle = _compute_intersection_angle_dlt(L1, L2, x1, y1, x2, y2)
+        angles.append(angle)
+
+    # Overall accuracy
+    all_v = np.array(residuals).flatten()
+    dof = 4 * n - 3 * n  # 4 equations per point, 3 unknowns per point
+    if dof > 0:
+        sigma0 = np.sqrt(np.sum(all_v**2) / dof)
+    else:
+        sigma0 = 0.0
+
+    return ForwardIntersectionResult(
+        point_ids=point_ids,
+        coordinates=coordinates,
+        residuals=residuals,
+        sigma0=sigma0,
+        intersection_angles=angles,
+    )
+
+
+def _compute_intersection_angle_dlt(
+    L1: np.ndarray, L2: np.ndarray,
+    x1: float, y1: float, x2: float, y2: float,
+) -> float:
+    """Compute intersection angle between two rays using DLT parameters.
+
+    Derives camera centers and ray directions from L parameters.
+    """
+    # Derive orientation from each set of L params
+    from .dlt import derive_orientation
+    intr1, ext1 = derive_orientation(L1)
+    intr2, ext2 = derive_orientation(L2)
+
+    # Camera centers
+    C1 = np.array([ext1.Xs, ext1.Ys, ext1.Zs])
+    C2 = np.array([ext2.Xs, ext2.Ys, ext2.Zs])
+
+    # Rotation matrices
+    R1 = rotation_matrix(ext1.omega, ext1.phi, ext1.kappa)
+    R2 = rotation_matrix(ext2.omega, ext2.phi, ext2.kappa)
+
+    # Ray directions in object space: d = R^T @ [x, y, -f]
+    d1 = R1.T @ np.array([x1, y1, -intr1.f])
+    d2 = R2.T @ np.array([x2, y2, -intr2.f])
+    d1 = d1 / np.linalg.norm(d1)
+    d2 = d2 / np.linalg.norm(d2)
+
+    cos_angle = np.clip(np.dot(d1, d2), -1.0, 1.0)
+    return np.degrees(np.arccos(abs(cos_angle)))
+
+
+# ---- Resection-based forward intersection ----
+
+def forward_intersection_resection(
+    tie_points: list[TiePoint],
+    ext1: ExteriorOrientation,
+    ext2: ExteriorOrientation,
+    intrinsics: CameraIntrinsics,
+) -> ForwardIntersectionResult:
+    """Compute 3D coordinates by ray intersection from two resection results.
+
+    For each tie point, projects rays from each camera center and finds
+    the closest point between them.
+
+    Args:
+        tie_points: corresponding image points
+        ext1, ext2: exterior orientation of each image
+        intrinsics: camera intrinsics (shared)
+
+    Returns:
+        ForwardIntersectionResult
+    """
+    n = len(tie_points)
+    f = intrinsics.f
+
+    R1 = rotation_matrix(ext1.omega, ext1.phi, ext1.kappa)
+    R2 = rotation_matrix(ext2.omega, ext2.phi, ext2.kappa)
+
+    C1 = np.array([ext1.Xs, ext1.Ys, ext1.Zs])
+    C2 = np.array([ext2.Xs, ext2.Ys, ext2.Zs])
+
+    point_ids = []
+    coordinates = np.zeros((n, 3))
+    residuals = []
+    angles = []
+
+    for i, tp in enumerate(tie_points):
+        point_ids.append(tp.point_id)
+
+        # Ray directions in object space
+        d1 = R1.T @ np.array([tp.image1_x, tp.image1_y, -f])
+        d2 = R2.T @ np.array([tp.image2_x, tp.image2_y, -f])
+        d1 = d1 / np.linalg.norm(d1)
+        d2 = d2 / np.linalg.norm(d2)
+
+        # Closest point between two rays
+        # P = C1 + t1*d1 = C2 + t2*d2 (overdetermined)
+        # Solve: [d1, -d2] @ [t1, t2]^T = C2 - C1
+        w = C2 - C1
+        A = np.column_stack([d1, -d2])
+        t, _, _, _ = np.linalg.lstsq(A, w, rcond=None)
+
+        # Midpoint of the two closest points
+        P1 = C1 + t[0] * d1
+        P2 = C2 + t[1] * d2
+        xyz = (P1 + P2) / 2.0
+        coordinates[i] = xyz
+
+        # Residual: distance between the two ray points at closest approach
+        gap = P2 - P1
+        residuals.append((gap[0], gap[1], gap[2], np.linalg.norm(gap)))
+
+        # Intersection angle
+        cos_angle = np.clip(np.dot(d1, d2), -1.0, 1.0)
+        angles.append(np.degrees(np.arccos(abs(cos_angle))))
+
+    # Overall accuracy: RMS of gaps
+    gaps = [r[3] for r in residuals]
+    sigma0 = np.sqrt(np.mean(np.array(gaps)**2)) if gaps else 0.0
+
+    return ForwardIntersectionResult(
+        point_ids=point_ids,
+        coordinates=coordinates,
+        residuals=residuals,
+        sigma0=sigma0,
+        intersection_angles=angles,
+    )
+
+
+# ---- Distance computation ----
+
+def compute_point_distance(
+    coords: np.ndarray,
+    idx1: int,
+    idx2: int,
+) -> float:
+    """Compute Euclidean distance between two points by index."""
+    return float(np.linalg.norm(coords[idx1] - coords[idx2]))
+
+
+def compute_all_distances(
+    coords: np.ndarray,
+    point_ids: list[str],
+) -> list[dict]:
+    """Compute pairwise distances between all points.
+
+    Returns:
+        list of dicts with 'point1', 'point2', 'distance'
+    """
+    n = len(point_ids)
+    distances = []
+    for i in range(n):
+        for j in range(i + 1, n):
+            d = float(np.linalg.norm(coords[i] - coords[j]))
+            distances.append({
+                "point1": point_ids[i],
+                "point2": point_ids[j],
+                "distance": d,
+            })
+    return distances

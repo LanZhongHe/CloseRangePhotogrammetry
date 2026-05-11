@@ -5,7 +5,7 @@ import numpy as np
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem,
     QComboBox, QLabel, QPushButton, QHeaderView, QSplitter, QWidget,
-    QMessageBox, QLineEdit,
+    QMessageBox, QLineEdit, QCheckBox,
 )
 from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtCore import Qt, pyqtSignal
@@ -36,11 +36,12 @@ class MatchingDialog(QDialog):
         intrinsics: CameraIntrinsics,
         solve_config: SolveConfig,
         previous_matches: dict[int, str] | None = None,
+        previous_checks: dict[int, bool] | None = None,
         parent=None,
     ):
         super().__init__(parent)
         self.setWindowTitle("像点匹配")
-        self.setMinimumSize(900, 600)
+        self.setMinimumSize(950, 600)
 
         self._detected = detected_points
         self._control_field = control_field
@@ -49,8 +50,10 @@ class MatchingDialog(QDialog):
         self._intrinsics = intrinsics
         self._solve_config = solve_config
         self._previous_matches = previous_matches or {}
+        self._previous_checks = previous_checks or {}
 
         self._combos: list[QComboBox] = []
+        self._check_boxes: list[QCheckBox] = []
         self._init_ui()
         self._restore_previous()
 
@@ -63,9 +66,9 @@ class MatchingDialog(QDialog):
         table_widget = QWidget()
         table_layout = QVBoxLayout(table_widget)
 
-        self._table = QTableWidget(len(self._detected), 6)
+        self._table = QTableWidget(len(self._detected), 7)
         self._table.setHorizontalHeaderLabels([
-            "检测ID", "像素X", "像素Y", "控制场点号", "物方X", "物方Y"
+            "检测ID", "像素X", "像素Y", "控制场点号", "物方X", "物方Y", "检查点"
         ])
         header = self._table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.Stretch)
@@ -103,6 +106,11 @@ class MatchingDialog(QDialog):
             objy_item = QTableWidgetItem("")
             objy_item.setFlags(objy_item.flags() & ~Qt.ItemIsEditable)
             self._table.setItem(i, 5, objy_item)
+
+            # Check point checkbox
+            check_cb = QCheckBox()
+            self._table.setCellWidget(i, 6, check_cb)
+            self._check_boxes.append(check_cb)
 
         table_layout.addWidget(self._table)
 
@@ -156,6 +164,9 @@ class MatchingDialog(QDialog):
                     combo.setCurrentIndex(idx)
                 else:
                     combo.setEditText(cid)
+        for row_idx, is_check in self._previous_checks.items():
+            if 0 <= row_idx < len(self._check_boxes):
+                self._check_boxes[row_idx].setChecked(is_check)
         self._highlight_duplicates()
 
     def _on_combo_changed(self, row: int, text: str):
@@ -261,7 +272,11 @@ class MatchingDialog(QDialog):
     def _update_status(self):
         """Update status label with match count."""
         matched = sum(1 for c in self._combos if c.currentText())
-        self._status_label.setText(f"已匹配 {matched}")
+        checks = sum(1 for cb in self._check_boxes if cb.isChecked())
+        text = f"已匹配 {matched}"
+        if checks > 0:
+            text += f" (检查点 {checks})"
+        self._status_label.setText(text)
         self._ok_btn.setEnabled(matched >= 2)
 
     def get_matched_points(self) -> list[MatchedPoint]:
@@ -274,6 +289,7 @@ class MatchingDialog(QDialog):
             pt = self._detected[i]
             ox, oy, oz = self._control_field[cid]
             x_mm, y_mm = pixel_to_image_coords(pt.pixel_x, pt.pixel_y, self._intrinsics)
+            is_check = self._check_boxes[i].isChecked() if i < len(self._check_boxes) else False
             result.append(MatchedPoint(
                 detected_id=pt.id,
                 control_id=cid,
@@ -281,6 +297,7 @@ class MatchingDialog(QDialog):
                 image_x_mm=x_mm, image_y_mm=y_mm,
                 obj_x=ox, obj_y=oy, obj_z=oz,
                 is_manual=pt.source == "manual",
+                is_check=is_check,
             ))
         return result
 
@@ -291,4 +308,12 @@ class MatchingDialog(QDialog):
             cid = combo.currentText().strip()
             if cid:
                 result[i] = cid
+        return result
+
+    def get_checks_dict(self) -> dict[int, bool]:
+        """Return check point state as {row_index: is_check} for persistence."""
+        result = {}
+        for i, cb in enumerate(self._check_boxes):
+            if cb.isChecked():
+                result[i] = True
         return result

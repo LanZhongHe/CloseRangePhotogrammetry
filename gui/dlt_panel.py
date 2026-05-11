@@ -85,11 +85,12 @@ class DLTPanel(QWidget):
         )
 
     def _update_info(self):
-        n = len(self._matched_points)
+        n_ctrl = sum(1 for p in self._matched_points if not p.is_check)
+        n_check = sum(1 for p in self._matched_points if p.is_check)
         min_pts = 6
         self._info_label.setText(
-            f"已匹配 {n} 点 / 最少需要 {min_pts} / "
-            f"未知数 11 / 冗余度 {n * 2 - 11}"
+            f"控制点 {n_ctrl} / 检查点 {n_check} / 最少需要 {min_pts} / "
+            f"未知数 11 / 冗余度 {n_ctrl * 2 - 11}"
         )
 
     def _run(self):
@@ -141,19 +142,31 @@ class DLTPanel(QWidget):
         lines.append(f"  κ  = {ext.kappa:.6f} rad  ({np.degrees(ext.kappa):.4f}°)")
         lines.append("")
 
-        if r.distortion.K1 != 0:
+        d = r.distortion
+        if any([d.K1, d.K2, d.P1, d.P2]):
             lines.append("--- 畸变系数 ---")
-            d = r.distortion
-            lines.append(f"  K1 = {d.K1:.10e}")
-            if d.K2 != 0: lines.append(f"  K2 = {d.K2:.10e}")
+            for name, val in [("K1", d.K1), ("K2", d.K2), ("P1", d.P1), ("P2", d.P2)]:
+                if val != 0:
+                    lines.append(f"  {name} = {val:.10e}")
+            lines.append("")
+
+        # Check point accuracy
+        if r.check_point_ids:
+            lines.append("--- 检查点精度 ---")
+            lines.append(f"  检查点数量: {len(r.check_point_ids)}")
+            lines.append(f"  检查点 σ₀: {r.check_point_sigma0:.6f} mm")
+            lines.append(f"{'点号':>6s}  {'vx (mm)':>12s}  {'vy (mm)':>12s}")
+            for cid, (vx, vy) in zip(r.check_point_ids, r.check_point_residuals):
+                lines.append(f"{cid:>6s}  {vx:12.6f}  {vy:12.6f}")
             lines.append("")
 
         self._result_text.setPlainText("\n".join(lines))
 
-        # Fill residuals table
+        # Fill residuals table (control points only)
+        control_pts = [p for p in self._matched_points if not p.is_check]
         self._residual_table.setRowCount(len(r.residuals))
         for i, (vx, vy) in enumerate(r.residuals):
-            cid = self._matched_points[i].control_id if i < len(self._matched_points) else ""
+            cid = control_pts[i].control_id if i < len(control_pts) else ""
             self._residual_table.setItem(i, 0, QTableWidgetItem(cid))
             self._residual_table.setItem(i, 1, QTableWidgetItem(f"{vx:.6f}"))
             self._residual_table.setItem(i, 2, QTableWidgetItem(f"{vy:.6f}"))
@@ -171,6 +184,7 @@ class DLTPanel(QWidget):
 
         import json
         r = self._result
+        control_pts = [p for p in self._matched_points if not p.is_check]
         data = {
             "L_params": r.L_params.tolist(),
             "sigma0_mm": r.sigma0,
@@ -191,9 +205,16 @@ class DLTPanel(QWidget):
             },
             "param_std": r.param_std,
             "residuals": [
-                {"control_id": self._matched_points[i].control_id, "vx": vx, "vy": vy}
+                {"control_id": control_pts[i].control_id, "vx": vx, "vy": vy}
                 for i, (vx, vy) in enumerate(r.residuals)
             ],
+            "check_points": {
+                "sigma0_mm": r.check_point_sigma0,
+                "residuals": [
+                    {"control_id": cid, "vx": vx, "vy": vy}
+                    for cid, (vx, vy) in zip(r.check_point_ids, r.check_point_residuals)
+                ],
+            },
         }
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
