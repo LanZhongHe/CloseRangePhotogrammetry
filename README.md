@@ -240,7 +240,6 @@ CloseRangePhotogrammetry/
 ├── visualize_residuals.py           # 残差分析图
 ├── visualize_distortion.py          # 镜头畸变可视化
 ├── compare_results.py               # DLT 与后方交会对比
-└── whuthesis/                       # 实习报告（whu-thesis 模板）
 ```
 
 ## 算法说明
