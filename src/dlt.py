@@ -268,92 +268,6 @@ def derive_orientation(L: np.ndarray) -> tuple[CameraIntrinsics, ExteriorOrienta
     return intrinsics, exterior
 
 
-def _estimate_distortion_from_residuals(
-    matched_points: list[MatchedPoint],
-    neg_residuals: np.ndarray,
-    x0: float, y0: float,
-    solve_config: SolveConfig,
-    current_dist: DistortionCoefficients,
-) -> DistortionCoefficients:
-    """Estimate distortion coefficients from (x_measured - x_computed) residuals.
-
-    The caller must pass NEGATED DLT residuals, i.e., -(A @ L - b) = x_measured - x_computed,
-    since the DLT residual v = x_computed - x_measured ≈ -distortion.
-
-    The model solved is:
-        rhs_x = K1*dx*r2 + K2*dx*r4 + K3*dx*r6 + P1*(r2+2*dx^2) + 2*P2*dx*dy
-        rhs_y = K1*dy*r2 + K2*dy*r4 + K3*dy*r6 + 2*P1*dx*dy + P2*(r2+2*dy^2)
-    where rhs = x_measured - x_computed.
-
-    Args:
-        matched_points: original (uncorrected) matched points
-        neg_residuals: negated 2n residual vector (= x_measured - x_computed)
-        x0, y0: principal point in mm
-        solve_config: which parameters to estimate
-        current_dist: current distortion coefficients (carries over unsolved params)
-
-    Returns:
-        Updated DistortionCoefficients
-    """
-    n = len(matched_points)
-    # Determine which parameters to solve
-    param_names = []
-    if solve_config.solve_k1: param_names.append("K1")
-    if solve_config.solve_k2: param_names.append("K2")
-    if solve_config.solve_k3: param_names.append("K3")
-    if solve_config.solve_p1: param_names.append("P1")
-    if solve_config.solve_p2: param_names.append("P2")
-
-    if not param_names:
-        return current_dist
-
-    n_params = len(param_names)
-    A_dist = np.zeros((2 * n, n_params))
-    b_dist = neg_residuals.copy()
-
-    for i, pt in enumerate(matched_points):
-        dx = pt.image_x_mm - x0
-        dy = pt.image_y_mm - y0
-        r2 = dx * dx + dy * dy
-        r4 = r2 * r2
-
-        for j, pname in enumerate(param_names):
-            if pname == "K1":
-                A_dist[2*i, j] = dx * r2
-                A_dist[2*i+1, j] = dy * r2
-            elif pname == "K2":
-                A_dist[2*i, j] = dx * r4
-                A_dist[2*i+1, j] = dy * r4
-            elif pname == "K3":
-                r6 = r4 * r2
-                A_dist[2*i, j] = dx * r6
-                A_dist[2*i+1, j] = dy * r6
-            elif pname == "P1":
-                A_dist[2*i, j] = r2 + 2 * dx * dx
-                A_dist[2*i+1, j] = 2 * dx * dy
-            elif pname == "P2":
-                A_dist[2*i, j] = 2 * dx * dy
-                A_dist[2*i+1, j] = r2 + 2 * dy * dy
-
-    # Least squares: A_dist @ coeffs = b_dist
-    try:
-        AtA = A_dist.T @ A_dist
-        Atb = A_dist.T @ b_dist
-        coeffs = np.linalg.solve(AtA, Atb)
-    except np.linalg.LinAlgError:
-        return current_dist
-
-    # Update distortion coefficients
-    dist = DistortionCoefficients(
-        K1=current_dist.K1, K2=current_dist.K2, K3=current_dist.K3,
-        P1=current_dist.P1, P2=current_dist.P2,
-    )
-    for j, pname in enumerate(param_names):
-        setattr(dist, pname, coeffs[j])
-
-    return dist
-
-
 def _build_augmented_dlt_system(
     points: list[MatchedPoint],
     x0: float, y0: float,
@@ -365,7 +279,7 @@ def _build_augmented_dlt_system(
         L1*X + L2*Y + L3*Z + L4 - x*(L9*X + L10*Y + L11*Z) + dist_x = x
         L5*X + L6*Y + L7*Z + L8 - y*(L9*X + L10*Y + L11*Z) + dist_y = y
 
-    where dist_x/disty are the distortion correction terms:
+    where dist_x/dist_y are the distortion correction terms:
         dist_x = K1*dx*r2 + K2*dx*r4 + K3*dx*r6 + P1*(r2+2*dx^2) + 2*P2*dx*dy
         dist_y = K1*dy*r2 + K2*dy*r4 + K3*dy*r6 + 2*P1*dx*dy + P2*(r2+2*dy^2)
 

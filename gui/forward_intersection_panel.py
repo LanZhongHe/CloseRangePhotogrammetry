@@ -11,10 +11,11 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 
 from src.forward_intersection import (
-    TiePoint, forward_intersection_dlt, forward_intersection_resection,
+    TiePoint, forward_intersection_dlt, forward_intersection_dlt_distorted,
+    forward_intersection_resection,
     compute_point_distance, ForwardIntersectionResult,
 )
-from src.camera_model import CameraIntrinsics, ExteriorOrientation
+from src.camera_model import CameraIntrinsics, ExteriorOrientation, DistortionCoefficients
 from gui.image_pick_dialog import ImagePickDialog
 
 
@@ -27,6 +28,10 @@ class ForwardIntersectionPanel(QWidget):
         super().__init__(parent)
         self._L1: np.ndarray | None = None
         self._L2: np.ndarray | None = None
+        self._dist1: DistortionCoefficients | None = None
+        self._dist2: DistortionCoefficients | None = None
+        self._intr1: CameraIntrinsics | None = None
+        self._intr2: CameraIntrinsics | None = None
         self._ext1: ExteriorOrientation | None = None
         self._ext2: ExteriorOrientation | None = None
         self._intrinsics: CameraIntrinsics = intrinsics or CameraIntrinsics()
@@ -174,7 +179,7 @@ class ForwardIntersectionPanel(QWidget):
         layout.addWidget(result_splitter)
 
     def _load_l_params(self, image_num: int):
-        """Load DLT L parameters from a JSON file."""
+        """Load DLT L parameters, distortion, and intrinsics from a JSON file."""
         path, _ = QFileDialog.getOpenFileName(
             self, f"导入影像{image_num} DLT 参数", "",
             "JSON文件 (*.json);;所有文件 (*)"
@@ -184,16 +189,68 @@ class ForwardIntersectionPanel(QWidget):
         try:
             with open(path, "r", encoding="utf-8") as f:
                 data = json.load(f)
-            L = np.array(data["L_params"])
+
+            # Support both flat and nested JSON formats
+            if "L_params" in data:
+                # Flat format (single result)
+                L = np.array(data["L_params"])
+                dist_data = data.get("distortion", {})
+                intr_data = data.get("intrinsics", {})
+            elif "results" in data:
+                # Nested format from compare/analysis scripts
+                # Try to find the best available result (prefer with distortion)
+                results = data["results"]
+                if "dlt_with_k1k2p1p2" in results:
+                    key = "dlt_with_k1k2p1p2"
+                elif "dlt_with_k1" in results:
+                    key = "dlt_with_k1"
+                else:
+                    key = "dlt_no_distortion"
+                L = np.array(results[key]["L_params"])
+                dist_data = results[key].get("distortion", {})
+                intr_data = results[key].get("intrinsics", {})
+            else:
+                raise ValueError("JSON 格式不正确，未找到 L_params 或 results 字段")
+
             if len(L) != 11:
                 raise ValueError(f"L 参数应有 11 个，实际有 {len(L)}")
+
+            # Extract distortion coefficients
+            dist = DistortionCoefficients(
+                K1=dist_data.get("K1", 0.0),
+                K2=dist_data.get("K2", 0.0),
+                K3=dist_data.get("K3", 0.0),
+                P1=dist_data.get("P1", 0.0),
+                P2=dist_data.get("P2", 0.0),
+            )
+
+            # Extract intrinsics (x0, y0 for undistortion)
+            intr = CameraIntrinsics(
+                f=intr_data.get("f", self._intrinsics.f),
+                x0=intr_data.get("x0", 0.0),
+                y0=intr_data.get("y0", 0.0),
+                sensor_width=self._intrinsics.sensor_width,
+                sensor_height=self._intrinsics.sensor_height,
+                img_width=self._intrinsics.img_width,
+                img_height=self._intrinsics.img_height,
+            )
+
             if image_num == 1:
                 self._L1 = L
+                self._dist1 = dist
+                self._intr1 = intr
             else:
                 self._L2 = L
+                self._dist2 = dist
+                self._intr2 = intr
+
+            # Build status message
+            has_dist = any([dist.K1, dist.K2, dist.K3, dist.P1, dist.P2])
+            dist_str = "含畸变" if has_dist else "无畸变"
             self._l_status.setText(
                 f"影像1: {'已加载' if self._L1 is not None else '未加载'}  "
-                f"影像2: {'已加载' if self._L2 is not None else '未加载'}"
+                f"影像2: {'已加载' if self._L2 is not None else '未加载'}  "
+                f"[{dist_str}]"
             )
         except Exception as e:
             QMessageBox.warning(self, "加载失败", str(e))
@@ -302,7 +359,25 @@ class ForwardIntersectionPanel(QWidget):
             return
 
         try:
-            self._result = forward_intersection_dlt(tie_points, self._L1, self._L2)
+            # Use distortion-corrected forward intersection if distortion data available
+            if (self._dist1 is not None and self._dist2 is not None
+                    and self._intr1 is not None and self._intr2 is not None):
+                has_dist = any([
+                    self._dist1.K1, self._dist1.K2, self._dist1.K3,
+                    self._dist1.P1, self._dist1.P2,
+                    self._dist2.K1, self._dist2.K2, self._dist2.K3,
+                    self._dist2.P1, self._dist2.P2,
+                ])
+                if has_dist:
+                    self._result = forward_intersection_dlt_distorted(
+                        tie_points, self._L1, self._L2,
+                        self._dist1, self._dist2,
+                        self._intr1, self._intr2,
+                    )
+                else:
+                    self._result = forward_intersection_dlt(tie_points, self._L1, self._L2)
+            else:
+                self._result = forward_intersection_dlt(tie_points, self._L1, self._L2)
             self._display_result()
         except Exception as e:
             self._result_text.setPlainText(f"解算失败: {e}")
@@ -312,7 +387,14 @@ class ForwardIntersectionPanel(QWidget):
         if r is None:
             return
 
-        lines = ["=== 前方交会结果 (DLT) ===", ""]
+        # Determine method used
+        has_dist = (self._dist1 is not None and self._dist2 is not None
+                    and any([self._dist1.K1, self._dist1.K2, self._dist1.K3,
+                             self._dist1.P1, self._dist1.P2,
+                             self._dist2.K1, self._dist2.K2, self._dist2.K3,
+                             self._dist2.P1, self._dist2.P2]))
+        method = "DLT+畸变改正+迭代" if has_dist else "DLT"
+        lines = [f"=== 前方交会结果 ({method}) ===", ""]
         lines.append(f"单位权中误差 σ₀: {r.sigma0:.6f} mm")
         lines.append("")
 

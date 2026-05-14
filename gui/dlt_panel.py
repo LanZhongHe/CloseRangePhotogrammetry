@@ -45,9 +45,10 @@ class DLTPanel(QWidget):
         check_row = QHBoxLayout()
         self._solve_k1 = QCheckBox("K1"); self._solve_k1.setChecked(True)
         self._solve_k2 = QCheckBox("K2")
+        self._solve_k3 = QCheckBox("K3")
         self._solve_p1 = QCheckBox("P1")
         self._solve_p2 = QCheckBox("P2")
-        for cb in [self._solve_k1, self._solve_k2, self._solve_p1, self._solve_p2]:
+        for cb in [self._solve_k1, self._solve_k2, self._solve_k3, self._solve_p1, self._solve_p2]:
             check_row.addWidget(cb)
         dist_layout.addLayout(check_row)
 
@@ -80,6 +81,7 @@ class DLTPanel(QWidget):
         return SolveConfig(
             solve_k1=self._solve_k1.isChecked(),
             solve_k2=self._solve_k2.isChecked(),
+            solve_k3=self._solve_k3.isChecked(),
             solve_p1=self._solve_p1.isChecked(),
             solve_p2=self._solve_p2.isChecked(),
         )
